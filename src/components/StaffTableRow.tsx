@@ -21,6 +21,16 @@ export interface StaffMember {
   max_travel_time_mins?: string;
   max_travel_time_from_start_geo_location_mins?: string;
   buffer_time_mins?: string;
+  years_of_experience?: number;
+  love_language?: string;
+  about?: string;
+  trust_elements?: string[];
+  pups?: {
+    name: string;
+    breed: string;
+    age: number;
+    photo?: string;
+  }[];
   weekly_shifts: {
     created_at?: number;
     day_of_week: string;
