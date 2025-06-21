@@ -1,4 +1,4 @@
-import { Calendar, Users } from "lucide-react";
+import { Calendar, Users, Settings, TestTube } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import Logo from "../images/logo.svg?react";
 
@@ -35,6 +35,30 @@ function GroomClubSidebar() {
                 className={`mr-2 ${path === "/" ? "text-[#5F6C37]" : "text-neutral-500"}`}
               />
               Shift Management
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/pricing-appointments"
+              className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${path === "/pricing-appointments" ? "bg-[#DCE5B8] text-[#5F6C37]" : "text-neutral-700 hover:bg-neutral-100"}`}
+            >
+              <Settings
+                size={18}
+                className={`mr-2 ${path === "/pricing-appointments" ? "text-[#5F6C37]" : "text-neutral-500"}`}
+              />
+              Pricing & Appointments
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/testing"
+              className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${path === "/testing" ? "bg-[#DCE5B8] text-[#5F6C37]" : "text-neutral-700 hover:bg-neutral-100"}`}
+            >
+              <TestTube
+                size={18}
+                className={`mr-2 ${path === "/testing" ? "text-[#5F6C37]" : "text-neutral-500"}`}
+              />
+              Testing
             </Link>
           </li>
         </ul>

@@ -6,6 +6,8 @@ import ProfilePage from "./components/ProfilePage";
 import GroomClubSidebar from "./components/GroomClubSidebar";
 import GroomClubHeader from "./components/GroomClubHeader";
 import StaffLoginPage from "./components/StaffLoginPage";
+import PricingAppointmentsPage from "./components/PricingAppointmentsPage";
+import TestingPage from "./components/TestingPage";
 
 function App() {
   const location = useLocation();
@@ -24,6 +26,11 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/login" element={<StaffLoginPage />} />
+              <Route
+                path="/pricing-appointments"
+                element={<PricingAppointmentsPage />}
+              />
+              <Route path="/testing" element={<TestingPage />} />
               {import.meta.env.VITE_TEMPO === "true" && (
                 <Route path="/tempobook/*" />
               )}
