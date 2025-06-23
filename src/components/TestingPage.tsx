@@ -152,6 +152,7 @@ const TestingPage = () => {
                   <SelectContent>
                     <SelectItem value="all">All TCPs</SelectItem>
                     {mockTCPs &&
+                      Array.isArray(mockTCPs) &&
                       mockTCPs.map((tcp) => (
                         <SelectItem key={tcp.id} value={tcp.id.toString()}>
                           {tcp.first_name} {tcp.last_name}

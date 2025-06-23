@@ -2,12 +2,11 @@ import { useState } from "react";
 import StaffTableRow, { StaffMember } from "./StaffTableRow";
 import EditStaffModal from "./EditStaffModal";
 
-
- type Props={
-  staffData:StaffMember[]
-  setStaffData:(val:any)=>void
- }
-const StaffTable = ({staffData,setStaffData}:Props) => {
+type Props = {
+  staffData: StaffMember[];
+  setStaffData: (val: any) => void;
+};
+const StaffTable = ({ staffData, setStaffData }: Props) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
 
@@ -46,13 +45,15 @@ const StaffTable = ({staffData,setStaffData}:Props) => {
             </tr>
           </thead>
           <tbody>
-            {staffData.map((staff) => (
-              <StaffTableRow
-                key={staff.id}
-                staff={staff}
-                onEditStaff={handleEditStaff}
-              />
-            ))}
+            {staffData &&
+              Array.isArray(staffData) &&
+              staffData.map((staff) => (
+                <StaffTableRow
+                  key={staff.id}
+                  staff={staff}
+                  onEditStaff={handleEditStaff}
+                />
+              ))}
           </tbody>
         </table>
       </div>
