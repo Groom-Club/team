@@ -1,6 +1,6 @@
 import { Calendar, Users, Settings, TestTube } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import Logo from "../images/logo.svg?react";
+import Logo from "../images/logo-text.svg?react";
 
 function GroomClubSidebar() {
   const location = useLocation();
