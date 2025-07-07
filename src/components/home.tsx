@@ -17,8 +17,8 @@ function Home() {
   const gettcps = async () => {
     try {
       let res = await api.tcps.getTcps();
-      setTcps(res || []);
-      setActiveStaff(res?.[0].id)
+      setTcps(res?.data || []);
+      setActiveStaff(res?.data?.[0].id)
     } catch (error) {
       console.error("Error getting shift data:", error);
       setTcps([]);
@@ -32,8 +32,7 @@ function Home() {
   const handleOpenAddStaffModal = () => setIsAddStaffModalOpen(true);
   const handleCloseAddStaffModal = () => setIsAddStaffModalOpen(false);
   const handleSaveStaff = () => {
-    // Handle save logic here
-    console.log("Saving staff member");
+   
     handleCloseAddStaffModal();
   };
 

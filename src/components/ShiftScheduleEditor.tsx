@@ -5,6 +5,7 @@ import DateOverrideDrawer from "./DateOverrideDrawer";
 import DateOverrideHistoryTable from "./DateOverrideHistoryTable";
 import TimePicker from "./TimePicker";
 import { StaffMember } from "./StaffTableRow";
+import OngoingOverrides from "./OngoingOverrides";
 
 interface ShiftScheduleEditorProps {
   staffMember: StaffMember;
@@ -67,32 +68,7 @@ const ShiftScheduleEditor = ({ staffMember }: ShiftScheduleEditorProps) => {
   };
 
   // Sample history data - in a real app, this would come from an API or database
-  const [historyData, setHistoryData] = useState([
-    {
-      date: new Date(2023, 11, 25), // Christmas
-      workingHours: null, // Not working
-    },
-    {
-      date: new Date(2023, 11, 31), // New Year's Eve
-      workingHours: {
-        start_time: "9:00 AM",
-        end_time: "3:00 PM",
-        serviceArea: "Haircut",
-      },
-    },
-    {
-      date: new Date(2024, 0, 1), // New Year's Day
-      workingHours: null, // Not working
-    },
-    {
-      date: new Date(2024, 1, 14), // Valentine's Day
-      workingHours: {
-        start_time: "10:00 AM",
-        end_time: "7:00 PM",
-        serviceArea: "All services",
-      },
-    },
-  ]);
+ 
 
   const handleWorkingChange = (index: number, is_working: boolean) => {
     setSchedules((prev) => {
@@ -130,7 +106,6 @@ const ShiftScheduleEditor = ({ staffMember }: ShiftScheduleEditorProps) => {
       })
     );
   }, [staffMember]);
-  console.log(staffMember, "props", schedules);
 
   return (
     <div className="w-full h-full bg-white rounded-lg border border-neutral-200 p-6">
@@ -251,14 +226,9 @@ const ShiftScheduleEditor = ({ staffMember }: ShiftScheduleEditorProps) => {
         </div>
 
         {activeTab === "ongoing" ? (
-          <div className="bg-[#FCF9F5] border border-neutral-200 rounded-lg p-8 text-center">
-            <p className="text-neutral-600">
-              Add dates when your availability changes from your regular working
-              hours.
-            </p>
-          </div>
+          <OngoingOverrides staffMember={staffMember}/>
         ) : (
-          <DateOverrideHistoryTable historyData={historyData} />
+          <DateOverrideHistoryTable staffMember={staffMember} />
         )}
       </div>
       {/* Copy Working Hours Modal */}

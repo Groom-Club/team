@@ -1,8 +1,7 @@
-import axios from 'axios';
+import axios from "axios";
 
-const getTcps= async ()=>{
-    const res = await axios.get('https://xspq-okrk-sotk.n7d.xano.io/api:I1rIkXec/tcps')
-    return res.data
-}
+const getTcps = () => {
+  return axios.get("https://xspq-okrk-sotk.n7d.xano.io/api:I1rIkXec/tcps");
+};
 
-export default {getTcps}
+export default { getTcps };
