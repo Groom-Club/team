@@ -1,7 +1,12 @@
 
-import tcps from './tcps'
+import useTcpsApi from './tcps'
 
-const api ={
+const useApi = () => {
+  const tcps = useTcpsApi();
+  
+  return {
     tcps
-}
-export default api
+  };
+};
+
+export default useApi;

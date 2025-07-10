@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { X, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
+import {
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Trash2,
+  Trash,
+} from "lucide-react";
 import TimePicker from "./TimePicker";
-import { format, addMonths, subMonths, isSameDay, getDay } from "date-fns";
+import { format, addMonths, subMonths, isSameDay, getDay,isBefore, } from "date-fns";
+import { Button } from "./ui/button";
 
 interface WorkingHours {
   startTime: string;
@@ -9,6 +17,7 @@ interface WorkingHours {
 }
 
 interface DateOverride {
+  is_working: boolean;
   date: Date;
   workingHours: WorkingHours | null; // null means not working
 }
@@ -43,19 +52,22 @@ const DateOverrideDrawer = ({
   };
 
   const handleDateClick = (date: Date) => {
-    setSelectedDate(date);
-
-    // Check if date is already in overrides
-    const existingOverrideIndex = dateOverrides.findIndex((override) =>
-      isSameDay(override.date, date),
-    );
-
-    if (existingOverrideIndex === -1) {
-      // If not in overrides yet, add to selected dates
-      if (!selectedDates.some((d) => isSameDay(d, date))) {
-        setSelectedDates([...selectedDates, date]);
-      }
+    if (isSameDay(selectedDate, date)) {
+      return;
     }
+    setSelectedDate(date);
+    if(selectedDates.some((d)=>isSameDay(d,date))){
+      return
+    }
+    setSelectedDates([...selectedDates, date]);
+    setDateOverrides([
+      ...dateOverrides,
+      {
+        date,
+        workingHours: null,
+        is_working: false,
+      },
+    ]);
   };
 
   // Check if staff normally works on a given day
@@ -69,7 +81,7 @@ const DateOverrideDrawer = ({
   // Add or update working hours for a date
   const handleAddWorkingHours = (date: Date) => {
     const existingOverrideIndex = dateOverrides.findIndex((override) =>
-      isSameDay(override.date, date),
+      isSameDay(override.date, date)
     );
 
     const defaultWorkingHours = {
@@ -84,6 +96,7 @@ const DateOverrideDrawer = ({
         {
           date,
           workingHours: defaultWorkingHours,
+          is_working: true,
         },
       ]);
     } else {
@@ -92,6 +105,7 @@ const DateOverrideDrawer = ({
       if (updatedOverrides[existingOverrideIndex].workingHours === null) {
         updatedOverrides[existingOverrideIndex].workingHours =
           defaultWorkingHours;
+        updatedOverrides[existingOverrideIndex].is_working = true;
         setDateOverrides(updatedOverrides);
       }
     }
@@ -100,7 +114,7 @@ const DateOverrideDrawer = ({
   // Remove working hours for a date
   const handleRemoveWorkingHours = (date: Date) => {
     const existingOverrideIndex = dateOverrides.findIndex((override) =>
-      isSameDay(override.date, date),
+      isSameDay(override.date, date)
     );
 
     if (existingOverrideIndex !== -1) {
@@ -114,10 +128,10 @@ const DateOverrideDrawer = ({
   const handleUpdateWorkingHours = (
     date: Date,
     field: keyof WorkingHours,
-    value: string,
+    value: string
   ) => {
     const existingOverrideIndex = dateOverrides.findIndex((override) =>
-      isSameDay(override.date, date),
+      isSameDay(override.date, date)
     );
 
     if (
@@ -136,19 +150,17 @@ const DateOverrideDrawer = ({
   // Get working hours for a date
   const getWorkingHoursForDate = (date: Date): WorkingHours | null => {
     const override = dateOverrides.find((override) =>
-      isSameDay(override.date, date),
+      isSameDay(override.date, date)
     );
     return override ? override.workingHours : null;
   };
 
   const handleSave = () => {
-    // Filter out only dates that have overrides
-    const overridesToSave = dateOverrides.filter((override) =>
-      selectedDates.some((date) => isSameDay(date, override.date)),
-    );
-
-    onSave(overridesToSave);
+    onSave(dateOverrides);
     onClose();
+    setSelectedDate(null)
+    setSelectedDates([])
+    setDateOverrides([])
   };
 
   // Generate calendar days
@@ -182,6 +194,11 @@ const DateOverrideDrawer = ({
 
     return days;
   };
+  const handleRemoveDate=(date:Date)=>{
+    setDateOverrides(dateOverrides.filter((override)=>!isSameDay(override.date,date)))
+    setSelectedDates(selectedDates.filter((d)=>!isSameDay(d,date)))
+    setSelectedDate(null)
+  }
 
   const calendarDays = generateCalendarDays();
   const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -274,7 +291,14 @@ const DateOverrideDrawer = ({
                   {day ? (
                     <button
                       onClick={() => handleDateClick(day)}
-                      className={`w-full h-full flex items-center justify-center rounded-full text-sm ${isSameDay(day, selectedDate || new Date(0)) ? "bg-groom-yellow text-groom-charcoal" : selectedDates.some((d) => isSameDay(d, day)) ? "bg-groom-yellow/30 text-groom-charcoal" : "hover:bg-neutral-100"}`}
+                      className={`w-full h-full flex items-center justify-center rounded-full text-sm disabled:opacity-50 ${
+                        isSameDay(day, selectedDate || new Date(0))
+                          ? "bg-groom-yellow text-groom-charcoal"
+                          : selectedDates.some((d) => isSameDay(d, day))
+                          ? "bg-groom-yellow/30 text-groom-charcoal"
+                          : "hover:bg-neutral-100"
+                      }`}
+                      disabled={isBefore(day,new Date())}
                     >
                       {day.getDate()}
                     </button>
@@ -289,9 +313,21 @@ const DateOverrideDrawer = ({
           {/* Working Hours Section */}
           {selectedDate && (
             <div className="mb-6 border border-neutral-200 rounded-lg p-4">
-              <h4 className="font-medium text-neutral-900 mb-3">
-                {format(selectedDate, "EEEE, MMMM d, yyyy")}
-              </h4>
+              <div className="flex justify-between items-center">
+                <h4 className="font-medium text-neutral-900 mb-3">
+                  {format(selectedDate, "EEEE, MMMM d, yyyy")}
+                </h4>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleRemoveDate(selectedDate)}
+                >
+                  <Trash2
+                    size={16}
+                    className="text-neutral-400 hover:text-neutral-600"
+                  />
+                </Button>
+              </div>
 
               {/* Working Hours Content */}
               {(() => {
@@ -302,7 +338,7 @@ const DateOverrideDrawer = ({
                   // Show editable working hours
                   return (
                     <div>
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2 mb-2">
                         <label className="block text-sm font-medium text-neutral-700">
                           Working hours
                         </label>
@@ -321,7 +357,7 @@ const DateOverrideDrawer = ({
                             handleUpdateWorkingHours(
                               selectedDate,
                               "startTime",
-                              time,
+                              time
                             )
                           }
                         />
@@ -332,7 +368,7 @@ const DateOverrideDrawer = ({
                             handleUpdateWorkingHours(
                               selectedDate,
                               "endTime",
-                              time,
+                              time
                             )
                           }
                         />
@@ -366,7 +402,12 @@ const DateOverrideDrawer = ({
         {/* Footer */}
         <div className="p-6 border-t border-neutral-100 flex justify-end gap-3 sticky bottom-0 bg-white">
           <button
-            onClick={onClose}
+            onClick={()=>{
+              setSelectedDate(null)
+              setSelectedDates([])
+              setDateOverrides([])
+              onClose()
+            }}
             className="px-4 py-2 border border-neutral-200 rounded-md text-neutral-700 hover:bg-neutral-50 font-medium"
           >
             Cancel
@@ -374,7 +415,11 @@ const DateOverrideDrawer = ({
           <button
             onClick={handleSave}
             disabled={selectedDates.length === 0}
-            className={`px-4 py-2 rounded-md font-medium ${selectedDates.length === 0 ? "bg-neutral-200 text-neutral-500 cursor-not-allowed" : "bg-groom-charcoal text-white hover:bg-groom-charcoal/90"}`}
+            className={`px-4 py-2 rounded-md font-medium ${
+              selectedDates.length === 0
+                ? "bg-neutral-200 text-neutral-500 cursor-not-allowed"
+                : "bg-groom-charcoal text-white hover:bg-groom-charcoal/90"
+            }`}
           >
             Save
           </button>

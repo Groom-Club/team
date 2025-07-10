@@ -1,4 +1,4 @@
-import api from "@/api";
+
 import { useEffect, useState } from "react";
 import AddNewStaffButton from "./AddNewStaffButton";
 import AddNewStaffMember from "./AddNewStaffMember";
@@ -6,10 +6,12 @@ import ShiftScheduleEditor from "./ShiftScheduleEditor";
 import StaffListPanel from "./StaffListPanel";
 import StaffTable from "./StaffTable";
 import Modal from "./ui/modal";
+import useApi from "@/api";
 
 
 
 function Home() {
+  const api = useApi();
   const [activeTab, setActiveTab] = useState("shifts");
   const [isAddStaffModalOpen, setIsAddStaffModalOpen] = useState(false);
   const [tcps, setTcps] = useState([]);
@@ -35,6 +37,10 @@ function Home() {
    
     handleCloseAddStaffModal();
   };
+
+  const handleUpdateStaffMember=(staffMember:any)=>{
+    setTcps(tcps.map(tcp=>tcp.id===staffMember.id?staffMember:tcp))
+  }
 
   return (
     <div className="w-full h-full">
@@ -75,7 +81,7 @@ function Home() {
               <StaffListPanel staffData={tcps} activeStaffId={activeStaff} onSelectStaff={setActiveStaff} />
             </div>
             <div className="lg:col-span-2">
-              <ShiftScheduleEditor staffMember={tcps?.find(tcp=>tcp.id===activeStaff)} />
+              <ShiftScheduleEditor staffMember={tcps?.find(tcp=>tcp.id===activeStaff)} updateStaffMember={handleUpdateStaffMember} />
             </div>
           </div>
         )}

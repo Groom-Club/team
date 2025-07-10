@@ -5,14 +5,13 @@ interface CopyWorkingHoursModalProps {
   isOpen: boolean;
   onClose: () => void;
   onApply: (selectedDays: string[]) => void;
-  availableDays: string[];
+  
 }
 
 const CopyWorkingHoursModal = ({
   isOpen,
   onClose,
   onApply,
-  availableDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
 }: CopyWorkingHoursModalProps) => {
   const allDays = [
     "Sunday",
@@ -39,7 +38,7 @@ const CopyWorkingHoursModal = ({
     if (selectAll) {
       setSelectedDays([]);
     } else {
-      setSelectedDays([...availableDays]);
+      setSelectedDays([...allDays]);
     }
     setSelectAll(!selectAll);
   };
@@ -51,7 +50,7 @@ const CopyWorkingHoursModal = ({
     } else {
       const newSelected = [...selectedDays, day];
       setSelectedDays(newSelected);
-      setSelectAll(newSelected.length === availableDays.length);
+      setSelectAll(newSelected.length === allDays.length);
     }
   };
 
@@ -86,7 +85,7 @@ const CopyWorkingHoursModal = ({
             </div>
 
             {allDays.map((day) => {
-              const isAvailable = availableDays.includes(day);
+             
               return (
                 <div key={day} className="flex items-center">
                   <input
@@ -94,12 +93,12 @@ const CopyWorkingHoursModal = ({
                     id={`day-${day}`}
                     checked={selectedDays.includes(day)}
                     onChange={() => handleDayToggle(day)}
-                    disabled={!isAvailable}
+                  
                     className="h-4 w-4 rounded border-neutral-300 text-neutral-600 focus:ring-neutral-500"
                   />
                   <label
                     htmlFor={`day-${day}`}
-                    className={`ml-3 ${isAvailable ? "text-neutral-900" : "text-neutral-400"}`}
+                    className={`ml-3 text-neutral-900`}
                   >
                     {day}
                   </label>
