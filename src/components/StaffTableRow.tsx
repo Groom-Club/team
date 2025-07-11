@@ -30,6 +30,14 @@ export interface StaffMember {
     start_time?: string;
     tcp_id: number;
   }[];
+  schedule_overrides: {
+    end_time: string;
+    id: number;
+    override_date: string;
+    override_type: string;
+    start_time: string;
+    tcp_id: number;
+  }[];
 }
 
 interface StaffTableRowProps {

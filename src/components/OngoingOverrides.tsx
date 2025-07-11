@@ -1,16 +1,14 @@
 import { format } from "date-fns";
 import { StaffMember } from "./StaffTableRow";
-import { toDate } from "date-fns";
+import {toDate} from "date-fns"
 
 type Props = {
   staffMember: StaffMember;
 };
 
-const HistoryOverrides = ({ staffMember }: Props) => {
-  const HistoryOverrides = staffMember?.schedule_overrides?.filter(
-    (override) => toDate(override.override_date) < new Date()
-  );
-  if (HistoryOverrides?.length) {
+const OngoingOverrides = ({ staffMember }: Props) => {
+  const OngoingOverrides=staffMember?.schedule_overrides?.filter(override=>toDate(override.override_date)>=new Date())
+  if (OngoingOverrides?.length) {
     return (
       <div className="border border-neutral-200 rounded-lg overflow-hidden">
         <table className="w-full">
@@ -29,7 +27,7 @@ const HistoryOverrides = ({ staffMember }: Props) => {
             </tr>
           </thead>
           <tbody>
-            {HistoryOverrides.map((override, index) => {
+            {OngoingOverrides.map((override, index) => {
               const isWorking = override.override_type === "working";
               return (
                 <tr
@@ -74,4 +72,4 @@ const HistoryOverrides = ({ staffMember }: Props) => {
   );
 };
 
-export default HistoryOverrides;
+export default OngoingOverrides;

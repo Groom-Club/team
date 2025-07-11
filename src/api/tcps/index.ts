@@ -1,8 +1,33 @@
-import axios from 'axios';
+import { useClerkAxios } from "../clerkAxios";
 
-const getTcps= async ()=>{
-    const res = await axios.get('https://xspq-okrk-sotk.n7d.xano.io/api:I1rIkXec/tcps')
-    return res.data
-}
+const useTcpsApi = () => {
+  const axios = useClerkAxios();
 
-export default {getTcps}
+  const getTcps = () => {
+    return axios.get("/tcps");
+  };
+
+  const editShiftData = (tcp_weekly_shifts_id: number, shiftData?: any, params?: any) => {
+    return axios.put(
+      `/tcp_weekly_shifts/${tcp_weekly_shifts_id}`,
+      shiftData,
+      {
+        params: { token: import.meta.env.VITE_XANO_WRITE_TOKEN, ...params },
+      }
+    );
+  };
+  const createShiftData=(tcp_id:number,shiftData:any,params?:any)=>{
+    return axios.post(`/tcps/${tcp_id}/weekly-shifts`,shiftData,{
+      params: { token: import.meta.env.VITE_XANO_WRITE_TOKEN, ...params },
+    })
+  }
+  const createScheduleOverride=(tcp_id:number,shiftData:any,params?:any)=>{
+    return axios.post(`/tcps/${tcp_id}/schedule-overrides`,shiftData,{
+      params: { token: import.meta.env.VITE_XANO_WRITE_TOKEN, ...params },
+    })
+  }
+
+  return { getTcps, editShiftData,createScheduleOverride,createShiftData };
+};
+
+export default useTcpsApi;
