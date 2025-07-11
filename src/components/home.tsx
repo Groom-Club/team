@@ -76,11 +76,11 @@ function Home() {
             <StaffTable staffData={tcps} setStaffData={setTcps} />
           </>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1">
+          <div className="flex gap-6 max-h-min overflow-auto">
+            <div className="w-1/3 h-[760px]">
               <StaffListPanel staffData={tcps} activeStaffId={activeStaff} onSelectStaff={setActiveStaff} />
             </div>
-            <div className="lg:col-span-2">
+            <div className="w-2/3">
               <ShiftScheduleEditor staffMember={tcps?.find(tcp=>tcp.id===activeStaff)} updateStaffMember={handleUpdateStaffMember} />
             </div>
           </div>

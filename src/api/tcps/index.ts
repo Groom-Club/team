@@ -26,8 +26,13 @@ const useTcpsApi = () => {
       params: { token: import.meta.env.VITE_XANO_WRITE_TOKEN, ...params },
     })
   }
+  const getBreeds = async (params?: any) => {
+    return axios.get(`/breeds`, {
+      params,
+    });
+  };
 
-  return { getTcps, editShiftData,createScheduleOverride,createShiftData };
+  return { getTcps, editShiftData,createScheduleOverride,createShiftData,getBreeds };
 };
 
 export default useTcpsApi;

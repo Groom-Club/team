@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import StaffTableRowDropdown from "./StaffTableRowDropdown";
 
 export interface StaffMember {
+  about?: string;
   id: number;
   name: string;
   first_name: string;
@@ -14,13 +15,18 @@ export interface StaffMember {
   travelTime?: number;
   maxTravelTime?: number;
   bufferTime?: number;
+  start_location?: number[];
+  end_location?: number[];
+  preferred_breeds?: number[];
+  restricted_breeds?: number[];
   startLocation?: string;
   endLocation?: string;
   proBreeds?: string[];
   conBreeds?: string[];
-  max_travel_time_mins?: string;
-  max_travel_time_from_start_geo_location_mins?: string;
-  buffer_time_mins?: string;
+  max_travel_time_mins?: number;
+  max_travel_time_from_start_geo_location_mins?: number;
+  max_travel_time_to_end_geo_location_mins?: number;
+  buffer_time_mins?: number;
   weekly_shifts: {
     created_at?: number;
     day_of_week: string;
@@ -38,6 +44,7 @@ export interface StaffMember {
     start_time: string;
     tcp_id: number;
   }[];
+  photo: string;
 }
 
 interface StaffTableRowProps {
