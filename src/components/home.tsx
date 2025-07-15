@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import AddNewStaffButton from "./AddNewStaffButton";
 import AddNewStaffMember from "./AddNewStaffMember";
@@ -8,19 +7,17 @@ import StaffTable from "./StaffTable";
 import Modal from "./ui/modal";
 import useApi from "@/api";
 
-
-
 function Home() {
   const api = useApi();
   const [activeTab, setActiveTab] = useState("shifts");
   const [isAddStaffModalOpen, setIsAddStaffModalOpen] = useState(false);
   const [tcps, setTcps] = useState([]);
-  const [activeStaff,setActiveStaff]=useState(0)  
+  const [activeStaff, setActiveStaff] = useState(0);
   const gettcps = async () => {
     try {
       let res = await api.tcps.getTcps();
       setTcps(res?.data || []);
-      setActiveStaff(res?.data?.[0].id)
+      setActiveStaff(res?.data?.[0].id);
     } catch (error) {
       console.error("Error getting shift data:", error);
       setTcps([]);
@@ -34,13 +31,15 @@ function Home() {
   const handleOpenAddStaffModal = () => setIsAddStaffModalOpen(true);
   const handleCloseAddStaffModal = () => setIsAddStaffModalOpen(false);
   const handleSaveStaff = () => {
-   
     handleCloseAddStaffModal();
   };
 
-  const handleUpdateStaffMember=(staffMember:any)=>{
-    setTcps(tcps.map(tcp=>tcp.id===staffMember.id?staffMember:tcp))
-  }
+  const handleUpdateStaffMember = async (staffMember: any) => {
+    let res = await api.tcps.updateStaffMember(staffMember.id, staffMember);
+    console.log(res, "this is updated staffMember");
+
+    // setTcps(tcps.map(tcp=>tcp.id===staffMember.id?staffMember:tcp))
+  };
 
   return (
     <div className="w-full h-full">
@@ -54,13 +53,21 @@ function Home() {
         {/* Tabs */}
         <div className="flex mb-6 bg-white rounded-lg border border-neutral-200 p-1 w-fit">
           <button
-            className={`px-4 py-2 rounded-md text-[#2E2F33] font-medium ${activeTab === "shifts" ? "bg-[#FCF9F5] shadow-sm" : "hover:bg-neutral-50"}`}
+            className={`px-4 py-2 rounded-md text-[#2E2F33] font-medium ${
+              activeTab === "shifts"
+                ? "bg-[#FCF9F5] shadow-sm"
+                : "hover:bg-neutral-50"
+            }`}
             onClick={() => setActiveTab("shifts")}
           >
             Staff Shift Management
           </button>
           <button
-            className={`px-4 py-2 rounded-md text-[#2E2F33] font-medium ${activeTab === "members" ? "bg-[#FCF9F5] shadow-sm" : "hover:bg-neutral-50"}`}
+            className={`px-4 py-2 rounded-md text-[#2E2F33] font-medium ${
+              activeTab === "members"
+                ? "bg-[#FCF9F5] shadow-sm"
+                : "hover:bg-neutral-50"
+            }`}
             onClick={() => setActiveTab("members")}
           >
             Staff Members ({tcps?.length})
@@ -78,10 +85,17 @@ function Home() {
         ) : (
           <div className="flex gap-6 max-h-min overflow-auto">
             <div className="w-1/3 h-[760px]">
-              <StaffListPanel staffData={tcps} activeStaffId={activeStaff} onSelectStaff={setActiveStaff} />
+              <StaffListPanel
+                staffData={tcps}
+                activeStaffId={activeStaff}
+                onSelectStaff={setActiveStaff}
+              />
             </div>
             <div className="w-2/3">
-              <ShiftScheduleEditor staffMember={tcps?.find(tcp=>tcp.id===activeStaff)} updateStaffMember={handleUpdateStaffMember} />
+              <ShiftScheduleEditor
+                staffMember={tcps?.find((tcp) => tcp.id === activeStaff)}
+                updateStaffMember={handleUpdateStaffMember}
+              />
             </div>
           </div>
         )}

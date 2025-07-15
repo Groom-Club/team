@@ -97,7 +97,7 @@ const AddNewStaffMember = ({
       } catch (error) {
         console.error("Error searching addresses:", error);
         setEndAddressOptions([]);
-      } 
+      }
     };
 
     fetchAddresses();
@@ -127,7 +127,6 @@ const AddNewStaffMember = ({
       setBreeds(res.data);
     });
   }, []);
-
 
   const {
     register,
@@ -161,19 +160,69 @@ const AddNewStaffMember = ({
   });
 
   const watchedValues = watch();
-  const { first_name, last_name,photo,restricted_breeds,preferred_breeds,end_location,start_location,endLocation,startLocation   } = watchedValues;
-  console.log({end_location,start_location,endLocation,startLocation})
+  const {
+    first_name,
+    last_name,
+    photo,
+    restricted_breeds,
+    preferred_breeds,
+    end_location,
+    start_location,
+    endLocation,
+    startLocation,
+  } = watchedValues;
 
   const onSubmit = async (data: StaffMemberFormData) => {
     try {
       console.log("Form data:", data);
+      let newPhotoUrl = null;
+      let newStaffMemberData: StaffMember | undefined = undefined;
+
+      if (selectedStaff?.id) {
+        if (!!data.photo) {
+          if (typeof data.photo !== "string") {
+            const formData = new FormData();
+            formData.append("file", data.photo);
+            const photoRes = await api.tcps.uploadTcpPhoto(
+              selectedStaff?.id,
+              formData
+            );
+            newPhotoUrl = photoRes.data.url;
+          }
+        }
+        let res = await api.tcps.updateStaffMember(selectedStaff.id, data);
+        newStaffMemberData = { ...res.data };
+        if (newPhotoUrl) {
+          newStaffMemberData.photo = newPhotoUrl;
+        }
+        console.log(res);
+      } else {
+        const { photo, ...payload } = data;
+        let res = await api.tcps.createStaffMember(
+          {
+            ...payload,
+            start_addess: data.startLocation,
+            end_addess: data.endLocation,
+          },
+        );
+        newStaffMemberData = { ...res.data };
+        if (!!data.photo) {
+          const formData = new FormData();
+          formData.append("file", data.photo);
+          const photoRes = await api.tcps.uploadTcpPhoto(res?.data?.tcp?.id, formData);
+          newPhotoUrl = photoRes.data.url;
+          newStaffMemberData.photo = newPhotoUrl;
+        }
+        console.log(res);
+      }
       // Here you would typically send the data to your API
-      onSave?.(data);
+      onSave?.(newStaffMemberData);
       reset();
     } catch (error) {
       console.error("Error saving staff member:", error);
     }
   };
+  console.log(watchedValues);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 max-w-4xl">
@@ -288,7 +337,7 @@ const AddNewStaffMember = ({
                 type="number"
                 placeholder="Enter capacity"
                 min="0"
-                {...register("capacity")}
+                {...register("capacity", { valueAsNumber: true })}
                 className={errors.capacity ? "border-red-500" : ""}
               />
               {errors.capacity && (
@@ -304,7 +353,7 @@ const AddNewStaffMember = ({
                 type="number"
                 placeholder="Enter buffer time"
                 min="0"
-                {...register("buffer_time_mins")}
+                {...register("buffer_time_mins", { valueAsNumber: true })}
                 className={errors.buffer_time_mins ? "border-red-500" : ""}
               />
               {errors.buffer_time_mins && (
@@ -325,9 +374,13 @@ const AddNewStaffMember = ({
                 type="number"
                 placeholder="Enter max travel time"
                 min="0"
-                {...register("max_travel_time_from_start_geo_location_mins")}
+                {...register("max_travel_time_from_start_geo_location_mins", {
+                  valueAsNumber: true,
+                })}
                 className={
-                  errors.max_travel_time_from_start_geo_location_mins ? "border-red-500" : ""
+                  errors.max_travel_time_from_start_geo_location_mins
+                    ? "border-red-500"
+                    : ""
                 }
               />
               {errors.max_travel_time_from_start_geo_location_mins && (
@@ -345,8 +398,14 @@ const AddNewStaffMember = ({
                 type="number"
                 placeholder="Enter max travel time"
                 min="0"
-                {...register("max_travel_time_to_end_geo_location_mins")}
-                className={errors.max_travel_time_to_end_geo_location_mins ? "border-red-500" : ""}
+                {...register("max_travel_time_to_end_geo_location_mins", {
+                  valueAsNumber: true,
+                })}
+                className={
+                  errors.max_travel_time_to_end_geo_location_mins
+                    ? "border-red-500"
+                    : ""
+                }
               />
               {errors.max_travel_time_to_end_geo_location_mins && (
                 <p className="text-sm text-red-500">
@@ -364,20 +423,25 @@ const AddNewStaffMember = ({
               <AutoCompleteSelect
                 id="startLocation"
                 options={startAddressOptions}
-                  value={startLocation?.length?[startLocation]:[]}  
-                onChange={(value:any[]) => {
-                  const selectedAddress = startAddressOptions?.find((v) => v.label === value[0])
-                 
-                  if(selectedAddress){
-                    setValue("startLocation", selectedAddress?.value)
-                    setValue("start_location", [selectedAddress?.latitude,selectedAddress.longitude])
-                  }else{
-                    setValue("startLocation", "")
-                    setValue("start_location", [])
+                value={startLocation?.length ? [startLocation] : []}
+                onChange={(value: any[]) => {
+                  const selectedAddress = startAddressOptions?.find(
+                    (v) => v.label === value[0]
+                  );
+
+                  if (selectedAddress) {
+                    setValue("startLocation", selectedAddress?.value);
+                    setValue("start_location", [
+                      selectedAddress?.latitude,
+                      selectedAddress.longitude,
+                    ]);
+                  } else {
+                    setValue("startLocation", "");
+                    setValue("start_location", []);
                   }
                 }}
                 onSearch={handleStartAddressSearch}
-                multiple={false}  
+                multiple={false}
                 className="pl-10"
               />
               <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
@@ -394,17 +458,21 @@ const AddNewStaffMember = ({
               <AutoCompleteSelect
                 id="endLocation"
                 options={endAddressOptions}
-                value={endLocation?.length?[endLocation]:[]}  
-                onChange={(value:any[]) => {
-                 
-                  const selectedAddress = endAddressOptions?.find((v) => v.label === value[0])
-                 
-                  if(selectedAddress){
-                    setValue("endLocation", selectedAddress?.value)
-                    setValue("end_location", [selectedAddress?.latitude,selectedAddress.longitude])
-                  }else{
-                    setValue("endLocation", "")
-                    setValue("end_location", [])
+                value={endLocation?.length ? [endLocation] : []}
+                onChange={(value: any[]) => {
+                  const selectedAddress = endAddressOptions?.find(
+                    (v) => v.label === value[0]
+                  );
+
+                  if (selectedAddress) {
+                    setValue("endLocation", selectedAddress?.value);
+                    setValue("end_location", [
+                      selectedAddress?.latitude,
+                      selectedAddress.longitude,
+                    ]);
+                  } else {
+                    setValue("endLocation", "");
+                    setValue("end_location", []);
                   }
                 }}
                 onSearch={handleEndAddressSearch}
@@ -454,31 +522,41 @@ const AddNewStaffMember = ({
                 value: breed.id.toString(),
               }))}
               value={preferred_breeds?.map((breed) => breed.toString()) || []}
-              onChange={(value:any[]) => {
-                setValue("preferred_breeds", (value).map((v) => Number(v)))
+              onChange={(value: any[]) => {
+                setValue(
+                  "preferred_breeds",
+                  value.map((v) => Number(v))
+                );
               }}
             />
             {errors.preferred_breeds && (
-              <p className="text-sm text-red-500">{errors.preferred_breeds.message}</p>
+              <p className="text-sm text-red-500">
+                {errors.preferred_breeds.message}
+              </p>
             )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="conBreeds">Con Breeds</Label>
-              <AutoCompleteSelect
-                id="conBreeds"
-                options={breeds.map((breed) => ({
-                  label: breed.name,
-                  value: breed.id.toString(),
-                }))}
-                value={restricted_breeds?.map((breed) => breed.toString()) || []}
-                onChange={(value:any[]) => {
-                  setValue("restricted_breeds", (value).map((v) => Number(v)))
-                }}
-                multiple={true}
-              />
+            <AutoCompleteSelect
+              id="conBreeds"
+              options={breeds.map((breed) => ({
+                label: breed.name,
+                value: breed.id.toString(),
+              }))}
+              value={restricted_breeds?.map((breed) => breed.toString()) || []}
+              onChange={(value: any[]) => {
+                setValue(
+                  "restricted_breeds",
+                  value.map((v) => Number(v))
+                );
+              }}
+              multiple={true}
+            />
             {errors.restricted_breeds && (
-              <p className="text-sm text-red-500">{errors.restricted_breeds.message}</p>
+              <p className="text-sm text-red-500">
+                {errors.restricted_breeds.message}
+              </p>
             )}
           </div>
         </div>
