@@ -6,7 +6,7 @@ import { Button } from "./ui/button";
 import { Camera, X } from "lucide-react";
 
 interface ProfileImageUploaderProps {
-  onImageSave: (croppedImage: string) => void;
+  onImageSave: (croppedImage: File) => void;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -24,7 +24,6 @@ const ProfileImageUploader = ({
     height: 100,
     x: 0,
     y: 0,
-    aspect: 1,
   });
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
 
@@ -77,9 +76,13 @@ const ProfileImageUploader = ({
       completedCrop.height,
     );
 
-    const base64Image = canvas.toDataURL("image/jpeg");
-    onImageSave(base64Image);
-    onClose();
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const file = new File([blob], "profile-image.jpg", { type: "image/jpeg" });
+        onImageSave(file);
+        onClose();
+      }
+    }, "image/jpeg");
   };
 
   const handleClose = () => {
