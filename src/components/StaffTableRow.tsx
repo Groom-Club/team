@@ -44,7 +44,7 @@ export interface StaffMember {
     start_time: string;
     tcp_id: number;
   }[];
-  photo: string;
+  photo: any;
 }
 
 interface StaffTableRowProps {
@@ -85,10 +85,18 @@ const StaffTableRow = ({ staff, onEditStaff }: StaffTableRowProps) => {
     >
       <td className="py-4 pl-6 pr-3">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-white text-xs">
-            {staff.first_name?.[0]}
-            {staff.last_name?.[0]}
-          </div>
+          {staff.photo?.url ? (
+            <img
+              src={staff.photo.url}
+              alt={`${staff.first_name} ${staff.last_name}`}
+              className="w-8 h-8 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-white text-xs">
+              {staff.first_name?.[0]}
+              {staff.last_name?.[0]}
+            </div>
+          )}
           <div>
             <div className="font-medium text-neutral-900">
               {staff.first_name}

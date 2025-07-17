@@ -6,6 +6,7 @@ import StaffListPanel from "./StaffListPanel";
 import StaffTable from "./StaffTable";
 import Modal from "./ui/modal";
 import useApi from "@/api";
+import { StaffMember } from "./StaffTableRow";
 
 function Home() {
   const api = useApi();
@@ -30,15 +31,12 @@ function Home() {
 
   const handleOpenAddStaffModal = () => setIsAddStaffModalOpen(true);
   const handleCloseAddStaffModal = () => setIsAddStaffModalOpen(false);
-  const handleSaveStaff = () => {
-    handleCloseAddStaffModal();
+  const handleSaveStaff = (staffMember:StaffMember) => {
+    setTcps([...tcps, staffMember]);
   };
 
-  const handleUpdateStaffMember = async (staffMember: any) => {
-    let res = await api.tcps.updateStaffMember(staffMember.id, staffMember);
-    console.log(res, "this is updated staffMember");
-
-    // setTcps(tcps.map(tcp=>tcp.id===staffMember.id?staffMember:tcp))
+  const handleUpdateStaffMember = async (staffMember: StaffMember) => {
+    setTcps(tcps.map(tcp=>tcp.id===staffMember.id?staffMember:tcp))
   };
 
   return (
@@ -106,7 +104,6 @@ function Home() {
         isOpen={isAddStaffModalOpen}
         onClose={handleCloseAddStaffModal}
         title="Add new staff member"
-        onSave={handleSaveStaff}
       >
         <AddNewStaffMember onSave={handleSaveStaff} />
       </Modal>

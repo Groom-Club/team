@@ -38,7 +38,7 @@ const useTcpsApi = () => {
   }
   const updateStaffMember=(tcp_id:number,staffData:any,params?:any)=>{
     return axios.patch(`/tcps/${tcp_id}`,staffData,{
-      params: { token: import.meta.env.VITE_XANO_WRITE_TOKEN, ...params },
+      params: { ...params },
     })
   }
   const uploadTcpPhoto=(tcp_id:number,photo:any,params?:any)=>{

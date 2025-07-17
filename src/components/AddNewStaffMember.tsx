@@ -45,8 +45,8 @@ const staffMemberSchema = z.object({
     .number()
     .min(0, "Travel time must be 0 or greater")
     .optional(),
-  start_location: z.array(z.number()).length(2).optional(),
-  end_location: z.array(z.number()).length(2).optional(),
+  start_location: z.array(z.number()).optional(),
+  end_location: z.array(z.number()).optional(),
   endLocation: z.string().optional(),
   startLocation: z.string().optional(),
   about: z.string().optional(),
@@ -138,7 +138,7 @@ const AddNewStaffMember = ({
   } = useForm<StaffMemberFormData>({
     resolver: zodResolver(staffMemberSchema),
     defaultValues: {
-      photo: selectedStaff?.photo || "",
+      photo: selectedStaff?.photo?.url || "",
       first_name: selectedStaff?.first_name || "",
       last_name: selectedStaff?.last_name || "",
       email: selectedStaff?.email || "",
@@ -174,15 +174,15 @@ const AddNewStaffMember = ({
 
   const onSubmit = async (data: StaffMemberFormData) => {
     try {
-      console.log("Form data:", data);
       let newPhotoUrl = null;
       let newStaffMemberData: StaffMember | undefined = undefined;
+      const {photo, ...payload}=data
 
       if (selectedStaff?.id) {
-        if (!!data.photo) {
-          if (typeof data.photo !== "string") {
+        if (!!photo) {
+          if (typeof photo !== "string") {
             const formData = new FormData();
-            formData.append("file", data.photo);
+            formData.append("file", photo);
             const photoRes = await api.tcps.uploadTcpPhoto(
               selectedStaff?.id,
               formData
@@ -190,14 +190,13 @@ const AddNewStaffMember = ({
             newPhotoUrl = photoRes.data.url;
           }
         }
-        let res = await api.tcps.updateStaffMember(selectedStaff.id, data);
+        let res = await api.tcps.updateStaffMember(selectedStaff.id, payload);
         newStaffMemberData = { ...res.data };
         if (newPhotoUrl) {
           newStaffMemberData.photo = newPhotoUrl;
         }
         console.log(res);
       } else {
-        const { photo, ...payload } = data;
         let res = await api.tcps.createStaffMember(
           {
             ...payload,
@@ -206,9 +205,9 @@ const AddNewStaffMember = ({
           },
         );
         newStaffMemberData = { ...res.data };
-        if (!!data.photo) {
+        if (!!photo) {
           const formData = new FormData();
-          formData.append("file", data.photo);
+            formData.append("file", photo);
           const photoRes = await api.tcps.uploadTcpPhoto(res?.data?.tcp?.id, formData);
           newPhotoUrl = photoRes.data.url;
           newStaffMemberData.photo = newPhotoUrl;
@@ -223,6 +222,7 @@ const AddNewStaffMember = ({
     }
   };
   console.log(watchedValues);
+  console.log(photo)
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 max-w-4xl">
@@ -243,7 +243,7 @@ const AddNewStaffMember = ({
             >
               {photo ? (
                 <img
-                  src={photo}
+                  src={typeof photo === 'string' ? photo : URL.createObjectURL(photo)}
                   alt="Profile"
                   className="w-full h-full object-cover"
                 />

@@ -34,8 +34,6 @@ const EditStaffModal = ({
       isOpen={isOpen}
       onClose={onClose}
       title={`Edit Staff: ${staff.first_name} ${staff.last_name}`}
-      onSave={handleSave}
-      saveButtonText="Save Changes"
     >
       <AddNewStaffMember onSave={handleSave} selectedStaff={staff} />
     </Modal>
