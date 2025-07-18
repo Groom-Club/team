@@ -21,6 +21,7 @@ interface AutoCompleteSelectProps {
   containerClassName?: string;
   disabled?: boolean;
   multiple?: boolean;
+  withoutSearch?: boolean;
 }
 
 export const AutoCompleteSelect: React.FC<AutoCompleteSelectProps> = ({
@@ -37,13 +38,16 @@ export const AutoCompleteSelect: React.FC<AutoCompleteSelectProps> = ({
   containerClassName,
   disabled = false,
   multiple = true,
+  withoutSearch = false,
 }) => {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [showSuggestions, setShowSuggestions] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const selectedValues = value || [];
-  const selectedOptions = options.filter((opt) => selectedValues.includes(opt.value));
+  const selectedOptions = options.filter((opt) =>
+    selectedValues.includes(opt.value)
+  );
 
   React.useEffect(() => {
     if (!multiple && selectedOptions.length > 0) {
@@ -59,10 +63,10 @@ export const AutoCompleteSelect: React.FC<AutoCompleteSelectProps> = ({
 
   const handleSelect = (option: (typeof options)[0]) => {
     const { value: optionValue, ...rest } = option;
-    
+
     if (multiple) {
       const newValues = selectedValues.includes(optionValue)
-        ? selectedValues.filter(v => v !== optionValue)
+        ? selectedValues.filter((v) => v !== optionValue)
         : [...selectedValues, optionValue];
       onChange(newValues, { ...rest });
       setSearchQuery("");
@@ -74,14 +78,19 @@ export const AutoCompleteSelect: React.FC<AutoCompleteSelectProps> = ({
   };
 
   const handleRemove = (valueToRemove: string) => {
-    const newValues = selectedValues.filter(v => v !== valueToRemove);
+    const newValues = selectedValues.filter((v) => v !== valueToRemove);
     onChange(newValues);
   };
 
-  const filteredOptions = options.filter((option) =>
-    option.label.toLowerCase().includes(searchQuery.toLowerCase()) &&
-    (!multiple || !selectedValues.includes(option.value))
-  );
+  const filteredOptions = withoutSearch
+    ? options.filter(
+        (option) => !multiple || !selectedValues.includes(option.value)
+      )
+    : options.filter(
+        (option) =>
+          option.label.toLowerCase().includes(searchQuery.toLowerCase()) &&
+          (!multiple || !selectedValues.includes(option.value))
+      );
 
   return (
     <div className="relative">
@@ -94,7 +103,7 @@ export const AutoCompleteSelect: React.FC<AutoCompleteSelectProps> = ({
         )}
       >
         {leftIcon}
-        
+
         {/* Selected items display */}
         {multiple && selectedOptions.length > 0 && (
           <div className="flex flex-wrap gap-1 p-1">
@@ -115,26 +124,46 @@ export const AutoCompleteSelect: React.FC<AutoCompleteSelectProps> = ({
             ))}
           </div>
         )}
-        
-        <Input
-          ref={inputRef}
-          id={id}
-          type="text"
-          value={searchQuery}
-          onChange={(e) => handleSearch(e.target.value)}
-          onFocus={() => setShowSuggestions(true)}
-          placeholder={multiple && selectedOptions.length > 0 ? "Add more..." : placeholder}
-          className={cn(
-            "flex-1 w-full bg-white border-none h-auto!",
-            className
-          )}
-          disabled={disabled}
-        />
+
+        {!withoutSearch ? (
+          <Input
+            ref={inputRef}
+            id={id}
+            type="text"
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+            onFocus={() => setShowSuggestions(true)}
+            placeholder={
+              multiple && selectedOptions.length > 0
+                ? "Add more..."
+                : placeholder
+            }
+            className={cn(
+              "flex-1 w-full bg-white border-none h-auto!",
+              className
+            )}
+            disabled={disabled}
+          />
+        ) : (
+          <div
+            className={cn(
+              "flex-1 w-full min-h-[40px] flex items-center px-3 cursor-pointer",
+              className
+            )}
+            onClick={() => setShowSuggestions(!showSuggestions)}
+          >
+            <span className="text-sm text-gray-500">
+              {selectedOptions.length > 0
+                ? `${selectedOptions.length} selected`
+                : placeholder}
+            </span>
+          </div>
+        )}
         {rightIcon}
       </div>
-      
-      {showSuggestions && searchQuery && (
-        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-30 overflow-auto">
+
+      {showSuggestions && (withoutSearch || searchQuery) && (
+        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
           {isLoading ? (
             <div className="px-3 py-2 text-sm text-gray-500">Searching...</div>
           ) : filteredOptions.length === 0 ? (
@@ -147,7 +176,8 @@ export const AutoCompleteSelect: React.FC<AutoCompleteSelectProps> = ({
                 key={option.value}
                 className={cn(
                   "px-3 py-2 text-sm cursor-pointer hover:bg-gray-100",
-                  selectedValues.includes(option.value) && "bg-blue-50 text-blue-600"
+                  selectedValues.includes(option.value) &&
+                    "bg-blue-50 text-blue-600"
                 )}
                 onClick={() => handleSelect(option)}
               >

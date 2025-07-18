@@ -1,15 +1,9 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import useApi from "@/api";
+import { AutoCompleteSelect } from "@/components/ui/auto-complete";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import DatePicker from "@/components/ui/date-picker";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -18,102 +12,73 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import DatePickerWithRange from "@/components/ui/date-picker-with-range";
-import { StaffMember } from "./StaffTableRow";
+import { useEffect, useState } from "react";
+
+interface TcpData {
+  id: number;
+  first_name?: string;
+  last_name?: string;
+  total_service_cost?: number;
+  total_service_duration?: number;
+  appointments: AppointmentData[];
+}
 
 interface AppointmentData {
-  priority: string;
-  tcpName: string;
-  date: string;
-  time: string;
-  adjustedDriveTime: string;
-  distance: string;
-  bonusPenalty: string;
-  duration: string;
+  adjustments?: string[];
+  travelTimeMins?: number;
+  adjustedTravelTime?: number;
+  travelDistance?: number;
 }
 
 const TestingPage = () => {
-  const [serviceDuration, setServiceDuration] = useState("");
-  const [selectedProvider, setSelectedProvider] = useState("");
-  const [appointments, setAppointments] = useState<AppointmentData[]>([]);
+  const [selectedMember, setSelectedMember] = useState<number | undefined>(
+    undefined
+  );
+  const [selectedDogs, setSelectedDogs] = useState<number[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [tcps, setTcps] = useState<TcpData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Mock TCP data - in real implementation, this would come from props or API
-  const mockTCPs: StaffMember[] = [
-    {
-      id: 1,
-      name: "John Doe",
-      first_name: "John",
-      last_name: "Doe",
-      role: "TCP",
-      email: "john.doe@example.com",
-      initials: "JD",
-      weekly_shifts: [],
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      first_name: "Jane",
-      last_name: "Smith",
-      role: "TCP",
-      email: "jane.smith@example.com",
-      initials: "JS",
-      weekly_shifts: [],
-    },
-    {
-      id: 3,
-      name: "Mike Johnson",
-      first_name: "Mike",
-      last_name: "Johnson",
-      role: "TCP",
-      email: "mike.johnson@example.com",
-      initials: "MJ",
-      weekly_shifts: [],
-    },
-  ];
+  const [members, setMembers] = useState<any[]>([]);
+  const [dogs, setDogs] = useState<any[]>([]);
+  const api = useApi();
+  const getMembers = async () => {
+    const res = await api.test.getMember();
+    setMembers(res.data);
+  };
+  const getDogs = async (memberId: number) => {
+    const res = await api.test.getDogs(memberId);
+    setDogs(res.data);
+  };
+  useEffect(() => {
+    getMembers();
+  }, []);
+  useEffect(() => {
+    if (selectedMember) {
+      getDogs(selectedMember);
+    }
+  }, [selectedMember]);
 
   const handleGetAppointments = async () => {
     setIsLoading(true);
-
-    // Mock API call - replace with actual API implementation
-    setTimeout(() => {
-      const mockAppointments: AppointmentData[] = [
-        {
-          priority: "High",
-          tcpName: "John Doe",
-          date: "2024-01-15",
-          time: "09:00 AM",
-          adjustedDriveTime: "15 min",
-          distance: "5.2 miles",
-          bonusPenalty: "+$5.00",
-          duration: "60 min",
-        },
-        {
-          priority: "Medium",
-          tcpName: "Jane Smith",
-          date: "2024-01-15",
-          time: "10:30 AM",
-          adjustedDriveTime: "22 min",
-          distance: "8.1 miles",
-          bonusPenalty: "-$2.50",
-          duration: "45 min",
-        },
-        {
-          priority: "Low",
-          tcpName: "Mike Johnson",
-          date: "2024-01-15",
-          time: "02:00 PM",
-          adjustedDriveTime: "18 min",
-          distance: "6.7 miles",
-          bonusPenalty: "$0.00",
-          duration: "30 min",
-        },
-      ];
-
-      setAppointments(mockAppointments);
-      setIsLoading(false);
-    }, 1000);
+    const res = await api.test.getAppointmentSuggestions(selectedMember, {
+      start_date: selectedDate,
+      dog_ids: selectedDogs,
+    });
+    setTcps(res.data);
+    setIsLoading(false);
   };
+  const appointments = tcps.reduce((acc, tcp) => {
+    return acc.concat(
+      ...tcp?.appointments?.map((app) => {
+        return {
+          ...app,
+          tcpName: tcp.first_name + " " + tcp.last_name,
+          totalCost: tcp.total_service_cost || 0,
+          totalDuration: tcp.total_service_duration || 0,
+        };
+      })
+    );
+  }, []);
 
   return (
     <div className="min-h-screen bg-neutral-100 p-6">
@@ -128,43 +93,49 @@ const TestingPage = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="serviceDuration">
-                  Service Duration (minutes)
-                </Label>
-                <Input
-                  id="serviceDuration"
-                  type="number"
-                  placeholder="Enter duration in minutes"
-                  value={serviceDuration}
-                  onChange={(e) => setServiceDuration(e.target.value)}
+                <Label htmlFor="member">Member</Label>
+                <AutoCompleteSelect
+                  options={[
+                    ...(members && Array.isArray(members)
+                      ? members.map((tcp) => ({
+                          label: `${tcp.first_name} ${tcp.last_name}`,
+                          value: tcp.id,
+                        }))
+                      : []),
+                  ]}
+                  value={[selectedMember]}
+                  onChange={(value) => setSelectedMember(value[0] as number)}
+                  placeholder="Search for member..."
+                  multiple={false}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dogs">Dogs</Label>
+                <AutoCompleteSelect
+                  options={[
+                    ...(dogs && Array.isArray(dogs)
+                      ? dogs.map((dog) => ({
+                          label: dog.dog_name,
+                          value: dog.id.toString(),
+                        }))
+                      : []),
+                  ]}
+                  value={selectedDogs.map((id) => id.toString())}
+                  onChange={(value) =>
+                    setSelectedDogs(value.map((v) => parseInt(v)))
+                  }
+                  placeholder="Select dogs..."
+                  multiple={true}
+                  withoutSearch={true}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="provider">Provider</Label>
-                <Select
-                  value={selectedProvider}
-                  onValueChange={setSelectedProvider}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a provider" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All TCPs</SelectItem>
-                    {mockTCPs &&
-                      Array.isArray(mockTCPs) &&
-                      mockTCPs.map((tcp) => (
-                        <SelectItem key={tcp.id} value={tcp.id.toString()}>
-                          {tcp.first_name} {tcp.last_name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
                 <Label>Start Date</Label>
-                <DatePickerWithRange />
+                <DatePicker
+                  date={selectedDate}
+                  onDateChange={(date) => setSelectedDate(date)}
+                />
               </div>
             </div>
 
@@ -194,37 +165,51 @@ const TestingPage = () => {
                     <TableHead>TCP Name</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Time</TableHead>
+                    <TableHead>Adjustments</TableHead>
+                    <TableHead>Travel Time</TableHead>
                     <TableHead>Adjusted Drive Time</TableHead>
-                    <TableHead>Distance</TableHead>
                     <TableHead>Bonus/Penalty</TableHead>
+                    <TableHead>Distance</TableHead>
+                    <TableHead>Cost</TableHead>
                     <TableHead>Duration</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {appointments.map((appointment, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">
-                        {appointment.priority}
-                      </TableCell>
-                      <TableCell>{appointment.tcpName}</TableCell>
-                      <TableCell>{appointment.date}</TableCell>
-                      <TableCell>{appointment.time}</TableCell>
-                      <TableCell>{appointment.adjustedDriveTime}</TableCell>
-                      <TableCell>{appointment.distance}</TableCell>
-                      <TableCell
-                        className={`font-medium ${
-                          appointment.bonusPenalty.startsWith("+")
-                            ? "text-green-600"
-                            : appointment.bonusPenalty.startsWith("-")
-                              ? "text-red-600"
-                              : "text-neutral-600"
-                        }`}
-                      >
-                        {appointment.bonusPenalty}
-                      </TableCell>
-                      <TableCell>{appointment.duration}</TableCell>
-                    </TableRow>
-                  ))}
+                  {appointments.map((app, index) => {
+                    return (
+                      <>
+                        <TableRow key={index}>
+                          <TableCell>{index + 1}</TableCell>
+                          <TableCell>{app.tcpName}</TableCell>
+                          <TableCell>
+                            {app.timeSlotDateAndTime?.split("T")[0]}
+                          </TableCell>
+                          <TableCell>
+                            {app.timeSlotDateAndTime?.split("T")[1]}
+                          </TableCell>
+                          <TableCell>{app.adjustments?.join(", ")}</TableCell>
+                          <TableCell>{app.travelTimeMins}</TableCell>
+                          <TableCell>{app.adjustedTravelTime}</TableCell>
+                          <TableCell
+                            className={
+                              app.travelTimeMins - app.adjustedTravelTime > 0
+                                ? "text-green-600"
+                                : app.travelTimeMins - app.adjustedTravelTime <
+                                  0
+                                ? "text-red-600"
+                                : ""
+                            }
+                          >
+                            {app.travelTimeMins - app.adjustedTravelTime}
+                          </TableCell>
+                          <TableCell>{app.travelDistance}</TableCell>
+
+                          <TableCell>${app.totalCost}</TableCell>
+                          <TableCell>{app.totalDuration} minutes</TableCell>
+                        </TableRow>
+                      </>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </CardContent>

@@ -30,7 +30,7 @@ const useConfigApi = () => {
     data: any,
     params?: any
   ) => {
-    return axios.put(
+    return axios.patch(
       `/appointment_rank_config/${appointment_rank_config_id}`,
       data,
       {
