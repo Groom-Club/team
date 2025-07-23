@@ -176,7 +176,7 @@ const AddNewStaffMember = ({
     try {
       let newPhotoUrl = null;
       let newStaffMemberData: StaffMember | undefined = undefined;
-      const {photo, ...payload}=data
+      const { photo, ...payload } = data;
 
       if (selectedStaff?.id) {
         if (!!photo) {
@@ -197,18 +197,19 @@ const AddNewStaffMember = ({
         }
         console.log(res);
       } else {
-        let res = await api.tcps.createStaffMember(
-          {
-            ...payload,
-            start_addess: data.startLocation,
-            end_addess: data.endLocation,
-          },
-        );
-        newStaffMemberData = { ...res.data };
+        let res = await api.tcps.createStaffMember({
+          ...payload,
+          start_addess: data.startLocation,
+          end_addess: data.endLocation,
+        });
+        newStaffMemberData = { ...res.data.tcp };
         if (!!photo) {
           const formData = new FormData();
-            formData.append("file", photo);
-          const photoRes = await api.tcps.uploadTcpPhoto(res?.data?.tcp?.id, formData);
+          formData.append("file", photo);
+          const photoRes = await api.tcps.uploadTcpPhoto(
+            res?.data?.tcp?.id,
+            formData
+          );
           newPhotoUrl = photoRes.data.url;
           newStaffMemberData.photo = newPhotoUrl;
         }
@@ -222,7 +223,7 @@ const AddNewStaffMember = ({
     }
   };
   console.log(watchedValues);
-  console.log(photo)
+  console.log(photo);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 max-w-4xl">
@@ -243,7 +244,11 @@ const AddNewStaffMember = ({
             >
               {photo ? (
                 <img
-                  src={typeof photo === 'string' ? photo : URL.createObjectURL(photo)}
+                  src={
+                    typeof photo === "string"
+                      ? photo
+                      : URL.createObjectURL(photo)
+                  }
                   alt="Profile"
                   className="w-full h-full object-cover"
                 />
