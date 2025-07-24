@@ -18,7 +18,7 @@ const StaffListPanel = ({
           Staff Members
         </h2>
       </div>
-      <div className="overflow-y-auto max-h-[calc(100vh-220px)]">
+      <div className="overflow-y-auto max-h-full">
         {staffData.map((staff) => (
           <div
             key={staff.id}

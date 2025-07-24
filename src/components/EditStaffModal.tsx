@@ -16,11 +16,13 @@ const EditStaffModal = ({
   staff,
   onSave,
 }: EditStaffModalProps) => {
-  const [updatedStaff, setUpdatedStaff] = useState<StaffMember | null>(staff);
+  console.log({staff})
 
-  const handleSave = () => {
-    if (updatedStaff && onSave) {
-      onSave(updatedStaff);
+
+
+  const handleSave = (newStaff?: StaffMember) => {
+    if (newStaff && onSave) {
+      onSave(newStaff);
     }
     onClose();
   };
@@ -31,11 +33,9 @@ const EditStaffModal = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Edit Staff: ${staff.name}`}
-      onSave={handleSave}
-      saveButtonText="Save Changes"
+      title={`Edit Staff: ${staff.first_name} ${staff.last_name}`}
     >
-      <AddNewStaffMember onSave={handleSave} />
+      <AddNewStaffMember onSave={handleSave} selectedStaff={staff} />
     </Modal>
   );
 };

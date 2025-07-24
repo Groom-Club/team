@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import StaffTableRowDropdown from "./StaffTableRowDropdown";
 
 export interface StaffMember {
+  about?: string;
   id: number;
   name: string;
   first_name: string;
@@ -14,13 +15,18 @@ export interface StaffMember {
   travelTime?: number;
   maxTravelTime?: number;
   bufferTime?: number;
+  start_location?: number[];
+  end_location?: number[];
+  preferred_breeds?: number[];
+  restricted_breeds?: number[];
   startLocation?: string;
   endLocation?: string;
   proBreeds?: string[];
   conBreeds?: string[];
-  max_travel_time_mins?: string;
-  max_travel_time_from_start_geo_location_mins?: string;
-  buffer_time_mins?: string;
+  max_travel_time_mins?: number;
+  max_travel_time_from_start_geo_location_mins?: number;
+  max_travel_time_to_end_geo_location_mins?: number;
+  buffer_time_mins?: number;
   weekly_shifts: {
     created_at?: number;
     day_of_week: string;
@@ -38,6 +44,7 @@ export interface StaffMember {
     start_time: string;
     tcp_id: number;
   }[];
+  photo: any;
 }
 
 interface StaffTableRowProps {
@@ -78,10 +85,18 @@ const StaffTableRow = ({ staff, onEditStaff }: StaffTableRowProps) => {
     >
       <td className="py-4 pl-6 pr-3">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-white text-xs">
-            {staff.first_name?.[0]}
-            {staff.last_name?.[0]}
-          </div>
+          {staff.photo?.url ? (
+            <img
+              src={staff.photo.url}
+              alt={`${staff.first_name} ${staff.last_name}`}
+              className="w-8 h-8 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-white text-xs">
+              {staff.first_name?.[0]}
+              {staff.last_name?.[0]}
+            </div>
+          )}
           <div>
             <div className="font-medium text-neutral-900">
               {staff.first_name}
