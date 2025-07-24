@@ -1,62 +1,74 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import useApi from "@/api";
 
 interface PricingData {
   positionOneIncrease: string;
   positionThreeDecrease: string;
 }
 
-interface AppointmentsData {
-  lookAheadDays: string;
-  lateDayThreshold: string;
-  startZoneThreshold: string;
-  endZoneThreshold: string;
-  firstAppointmentBonus: string;
-  endZoneLateDayBonus: string;
-  backtrackThreshold: string;
-  backtrackPenaltyMultiplier: string;
-  xlDogWeight: string;
-  xlDogLateDayPenalty: string;
+
+const initialAppointmentsData={
+  lookahead_days: 0,
+    late_day_max: 0,
+    start_zone_max: 0,
+    end_zone_max: 0,  
+    first_appt_bonus: 0,
+    end_zone_late_day_bonus: 0,
+    backtrack_max: 0,
+    backtrack_penalty: 0,
+    xl_dog_min_weight: 0,
+    xl_dog_penalty: 0,
 }
-
 const PricingAppointmentsPage = () => {
-  const [pricingData, setPricingData] = useState<PricingData>({
-    positionOneIncrease: "",
-    positionThreeDecrease: "",
-  });
+  const [pricingData, setPricingData] = useState<PriceModifier[]>([]);
 
-  const [appointmentsData, setAppointmentsData] = useState<AppointmentsData>({
-    lookAheadDays: "",
-    lateDayThreshold: "",
-    startZoneThreshold: "",
-    endZoneThreshold: "",
-    firstAppointmentBonus: "",
-    endZoneLateDayBonus: "",
-    backtrackThreshold: "",
-    backtrackPenaltyMultiplier: "",
-    xlDogWeight: "",
-    xlDogLateDayPenalty: "",
-  });
+  const [appointmentsData, setAppointmentsData] = useState<AppointmentRankConfig>(initialAppointmentsData);
+  const api = useApi();
 
-  const handlePricingChange = (field: keyof PricingData, value: string) => {
-    setPricingData((prev) => ({ ...prev, [field]: value }));
+  const fetchData = async () => {
+    const appointmentRes = await api.config.getAppointmentRankConfig();
+    const priceRes = await api.config.getPrices();
+    setAppointmentsData(appointmentRes.data?.[0] || initialAppointmentsData);
+    setPricingData(priceRes.data || []);  
+
+  };
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handlePricingChange = (id: number, modifier: number) => {
+    setPricingData((prev) => prev.map((item) => item.id === id ? { ...item, modifier } : item));
   };
 
   const handleAppointmentsChange = (
-    field: keyof AppointmentsData,
+    field: keyof AppointmentRankConfig,
     value: string,
   ) => {
     setAppointmentsData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = () => {
+  const handleSave = async() => {
     console.log("Pricing Data:", pricingData);
     console.log("Appointments Data:", appointmentsData);
+    const PricingChangeRes= await Promise.all(pricingData.map(async(item)=>{
+      if(item.id){
+       return (await api.config.updatePriceModifier(item.id, {...item}))?.data;
+      }else{
+        throw new Error("Price modifier ID is required");
+      }
+    }))
+    const AppointmentChangeRes= await api.config.updateAppointmentRankConfig(appointmentsData.id, appointmentsData);
+    console.log("Pricing Change Response:", PricingChangeRes);
+    console.log("Appointment Change Response:", AppointmentChangeRes);
     // TODO: Implement API call to save data
   };
+
+  const firstPositionPriceObj = pricingData.find((item) => item.position === 0);
+  const thirdPositionPriceObj = pricingData.find((item) => item.position === 2);
 
   return (
     <div className="min-h-screen bg-neutral-100 p-6">
@@ -81,9 +93,9 @@ const PricingAppointmentsPage = () => {
                   type="number"
                   step="0.01"
                   placeholder="Enter percentage"
-                  value={pricingData.positionOneIncrease}
+                  value={firstPositionPriceObj?.modifier}
                   onChange={(e) =>
-                    handlePricingChange("positionOneIncrease", e.target.value)
+                    handlePricingChange(firstPositionPriceObj?.id, +e.target.value)
                   }
                 />
               </div>
@@ -96,9 +108,9 @@ const PricingAppointmentsPage = () => {
                   type="number"
                   step="0.01"
                   placeholder="Enter percentage"
-                  value={pricingData.positionThreeDecrease}
+                  value={thirdPositionPriceObj?.modifier}
                   onChange={(e) =>
-                    handlePricingChange("positionThreeDecrease", e.target.value)
+                    handlePricingChange(thirdPositionPriceObj?.id, +e.target.value)
                   }
                 />
               </div>
@@ -114,154 +126,154 @@ const PricingAppointmentsPage = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="lookAheadDays">Look Ahead Days</Label>
+                <Label htmlFor="lookahead_days">Look Ahead Days</Label>
                 <Input
-                  id="lookAheadDays"
+                  id="lookahead_days"
                   type="number"
                   placeholder="Enter number of days"
-                  value={appointmentsData.lookAheadDays}
+                  value={appointmentsData.lookahead_days}
                   onChange={(e) =>
-                    handleAppointmentsChange("lookAheadDays", e.target.value)
+                    handleAppointmentsChange("lookahead_days", e.target.value)
                   }
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lateDayThreshold">Late Day Threshold (%)</Label>
+                <Label htmlFor="late_day_max">Late Day Threshold (%)</Label>
                 <Input
-                  id="lateDayThreshold"
+                  id="late_day_max"
                   type="number"
                   step="0.01"
                   placeholder="Enter percentage"
-                  value={appointmentsData.lateDayThreshold}
+                  value={appointmentsData.late_day_max}
                   onChange={(e) =>
-                    handleAppointmentsChange("lateDayThreshold", e.target.value)
+                    handleAppointmentsChange("late_day_max", e.target.value)
                   }
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="startZoneThreshold">
+                <Label htmlFor="start_zone_max">
                   Start Zone Threshold (minutes)
                 </Label>
                 <Input
-                  id="startZoneThreshold"
+                  id="start_zone_max"
                   type="number"
                   placeholder="Enter minutes"
-                  value={appointmentsData.startZoneThreshold}
+                  value={appointmentsData.start_zone_max}
                   onChange={(e) =>
                     handleAppointmentsChange(
-                      "startZoneThreshold",
+                      "start_zone_max",
                       e.target.value,
                     )
                   }
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="endZoneThreshold">
+                <Label htmlFor="end_zone_max">
                   End Zone Threshold (minutes)
                 </Label>
                 <Input
-                  id="endZoneThreshold"
+                  id="end_zone_max"
                   type="number"
                   placeholder="Enter minutes"
-                  value={appointmentsData.endZoneThreshold}
+                  value={appointmentsData.end_zone_max}
                   onChange={(e) =>
-                    handleAppointmentsChange("endZoneThreshold", e.target.value)
+                    handleAppointmentsChange("end_zone_max", e.target.value)
                   }
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="firstAppointmentBonus">
+                  <Label htmlFor="first_appt_bonus">
                   First Appointment Bonus (minutes)
                 </Label>
                 <Input
-                  id="firstAppointmentBonus"
+                  id="first_appt_bonus"
                   type="number"
                   placeholder="Enter minutes"
-                  value={appointmentsData.firstAppointmentBonus}
+                  value={appointmentsData.first_appt_bonus}
                   onChange={(e) =>
                     handleAppointmentsChange(
-                      "firstAppointmentBonus",
+                      "first_appt_bonus",
                       e.target.value,
                     )
                   }
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="endZoneLateDayBonus">
+                <Label htmlFor="end_zone_late_day_bonus">
                   End Zone Late Day Bonus (minutes)
                 </Label>
                 <Input
-                  id="endZoneLateDayBonus"
+                  id="end_zone_late_day_bonus"
                   type="number"
                   placeholder="Enter minutes"
-                  value={appointmentsData.endZoneLateDayBonus}
+                  value={appointmentsData.end_zone_late_day_bonus}
                   onChange={(e) =>
                     handleAppointmentsChange(
-                      "endZoneLateDayBonus",
+                      "end_zone_late_day_bonus",
                       e.target.value,
                     )
                   }
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="backtrackThreshold">
+                <Label htmlFor="backtrack_max">
                   Backtrack Threshold (minutes)
                 </Label>
                 <Input
-                  id="backtrackThreshold"
+                  id="backtrack_max"
                   type="number"
                   placeholder="Enter minutes"
-                  value={appointmentsData.backtrackThreshold}
+                  value={appointmentsData.backtrack_max}
                   onChange={(e) =>
                     handleAppointmentsChange(
-                      "backtrackThreshold",
+                      "backtrack_max",
                       e.target.value,
                     )
                   }
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="backtrackPenaltyMultiplier">
+                <Label htmlFor="backtrack_penalty">
                   Backtrack Penalty Multiplier
                 </Label>
                 <Input
-                  id="backtrackPenaltyMultiplier"
+                  id="backtrack_penalty"
                   type="number"
                   step="0.01"
                   placeholder="Enter decimal value"
-                  value={appointmentsData.backtrackPenaltyMultiplier}
+                  value={appointmentsData.backtrack_penalty}
                   onChange={(e) =>
                     handleAppointmentsChange(
-                      "backtrackPenaltyMultiplier",
+                        "backtrack_penalty",
                       e.target.value,
                     )
                   }
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="xlDogWeight">XL Dog Weight (pounds)</Label>
+                <Label htmlFor="xl_dog_min_weight">XL Dog Weight (pounds)</Label>
                 <Input
-                  id="xlDogWeight"
+                  id="xl_dog_min_weight"
                   type="number"
                   placeholder="Enter weight in pounds"
-                  value={appointmentsData.xlDogWeight}
+                  value={appointmentsData.xl_dog_min_weight}
                   onChange={(e) =>
-                    handleAppointmentsChange("xlDogWeight", e.target.value)
+                    handleAppointmentsChange("xl_dog_min_weight", e.target.value)
                   }
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="xlDogLateDayPenalty">
+                <Label htmlFor="xl_dog_penalty">
                   XL Dog Late Day Penalty (minutes)
                 </Label>
                 <Input
-                  id="xlDogLateDayPenalty"
+                  id="xl_dog_penalty"
                   type="number"
                   placeholder="Enter minutes"
-                  value={appointmentsData.xlDogLateDayPenalty}
+                  value={appointmentsData.xl_dog_penalty}
                   onChange={(e) =>
                     handleAppointmentsChange(
-                      "xlDogLateDayPenalty",
+                      "xl_dog_penalty",
                       e.target.value,
                     )
                   }

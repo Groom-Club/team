@@ -31,12 +31,14 @@ function Home() {
 
   const handleOpenAddStaffModal = () => setIsAddStaffModalOpen(true);
   const handleCloseAddStaffModal = () => setIsAddStaffModalOpen(false);
-  const handleSaveStaff = (staffMember:StaffMember) => {
+  const handleSaveStaff = (staffMember: StaffMember) => {
+    console.log(staffMember, "staffMember");
     setTcps([...tcps, staffMember]);
+    handleCloseAddStaffModal();
   };
 
   const handleUpdateStaffMember = async (staffMember: StaffMember) => {
-    setTcps(tcps.map(tcp=>tcp.id===staffMember.id?staffMember:tcp))
+    setTcps(tcps.map((tcp) => (tcp.id === staffMember.id ? staffMember : tcp)));
   };
 
   return (
