@@ -1,16 +1,20 @@
-import { ArrowRightToLine, Eye, Users } from "lucide-react";
+import { ArrowRightToLine, Eye, Trash, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface StaffTableRowDropdownProps {
   isOpen: boolean;
   onClose: () => void;
   triggerRef: React.RefObject<HTMLButtonElement>;
+  onEditStaff: () => void;
+  onDeleteStaff: () => void;
 }
 
 const StaffTableRowDropdown = ({
   isOpen,
   onClose,
   triggerRef,
+  onEditStaff,
+  onDeleteStaff,
 }: StaffTableRowDropdownProps) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ top: 0, right: 0 });
@@ -67,12 +71,14 @@ const StaffTableRowDropdown = ({
       role="menu"
       aria-orientation="vertical"
       tabIndex={-1}
+      onClick={(e) => e.stopPropagation()}
     >
       <div className="py-1">
         <button
           className="flex w-full items-center px-4 py-3 text-sm text-neutral-900 hover:bg-neutral-50 rounded-md mx-1 my-1 focus:outline-none focus:bg-neutral-100"
           role="menuitem"
           tabIndex={0}
+          onClick={onEditStaff}
         >
           <Eye size={16} className="mr-3 text-neutral-500" />
           View detail
@@ -80,10 +86,20 @@ const StaffTableRowDropdown = ({
         <button
           className="flex w-full items-center px-4 py-3 text-sm text-neutral-900 hover:bg-neutral-50 rounded-md mx-1 my-1 focus:outline-none focus:bg-neutral-100"
           role="menuitem"
-          tabIndex={0}
+          tabIndex={1}
+          // onClick={onDeleteStaff}
         >
           <ArrowRightToLine size={16} className="mr-3 text-neutral-500" />
           Transfer upcoming appointments
+        </button>
+        <button
+          className="flex w-full items-center px-4 py-3 text-sm text-red-500 hover:bg-neutral-50 rounded-md mx-1 my-1 focus:outline-none focus:bg-neutral-100"
+          role="menuitem"
+          tabIndex={2}
+          onClick={onDeleteStaff}
+        >
+          <Trash size={16} className="mr-3 text-red-500" />
+          Delete
         </button>
       </div>
     </div>

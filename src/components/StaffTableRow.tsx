@@ -50,9 +50,14 @@ export interface StaffMember {
 interface StaffTableRowProps {
   staff: StaffMember;
   onEditStaff?: (staff: StaffMember) => void;
+  onDeleteStaff?: (staff: StaffMember) => void;
 }
 
-const StaffTableRow = ({ staff, onEditStaff }: StaffTableRowProps) => {
+const StaffTableRow = ({
+  staff,
+  onEditStaff,
+  onDeleteStaff,
+}: StaffTableRowProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownTriggerRef = useRef<HTMLButtonElement>(null);
 
@@ -99,9 +104,7 @@ const StaffTableRow = ({ staff, onEditStaff }: StaffTableRowProps) => {
           )}
           <div>
             <div className="font-medium text-neutral-900">
-              {staff.first_name}
-              {""}
-              {staff.last_name}
+              {staff.first_name} {staff.last_name}
             </div>
           </div>
         </div>
@@ -130,6 +133,12 @@ const StaffTableRow = ({ staff, onEditStaff }: StaffTableRowProps) => {
             isOpen={isDropdownOpen}
             onClose={closeDropdown}
             triggerRef={dropdownTriggerRef}
+            onEditStaff={() => {
+              onEditStaff?.(staff);
+            }}
+            onDeleteStaff={() => {
+              onDeleteStaff?.(staff);
+            }}
           />
         </div>
       </td>

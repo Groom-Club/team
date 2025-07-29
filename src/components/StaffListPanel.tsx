@@ -8,31 +8,38 @@ interface StaffListPanelProps {
 
 const StaffListPanel = ({
   staffData,
-  activeStaffId=0,
+  activeStaffId = 0,
   onSelectStaff = () => {},
 }: StaffListPanelProps) => {
   return (
-    <div className="w-full h-full overflow-hidden rounded-lg border border-neutral-200 bg-white">
+    <div className="w-full max-h-[calc(100vh-100px)] overflow-hidden rounded-lg border border-neutral-200 bg-white">
       <div className="p-4 border-b border-neutral-100">
         <h2 className="text-lg font-semibold text-neutral-900">
           Staff Members
         </h2>
       </div>
-      <div className="overflow-y-auto max-h-full">
+      <div className="overflow-y-auto max-h-[calc(100vh-180px)]">
         {staffData.map((staff) => (
           <div
             key={staff.id}
-            className={`flex items-center gap-3 p-4 cursor-pointer transition-all hover:bg-neutral-50 ${activeStaffId === staff.id ? "bg-[#FCF9F5] shadow-sm" : ""}`}
+            className={`flex items-center gap-3 p-4 cursor-pointer transition-all hover:bg-neutral-50 ${
+              activeStaffId === staff.id ? "bg-[#FCF9F5] shadow-sm" : ""
+            }`}
             onClick={() => onSelectStaff(staff.id)}
           >
             <div
               className="h-10 w-10 rounded-full flex items-center justify-center text-white font-medium"
               style={{ backgroundColor: getAvatarColor(staff.id) }}
             >
-              {staff?.first_name?.[0]}{staff?.last_name?.[0]}
+              {staff?.first_name?.[0]}
+              {staff?.last_name?.[0]}
             </div>
             <div>
-              <p className="font-medium text-neutral-900">{staff?.first_name}{""}{staff?.last_name}</p>
+              <p className="font-medium text-neutral-900">
+                {staff?.first_name}
+                {""}
+                {staff?.last_name}
+              </p>
               <p className="text-sm text-neutral-500">{staff.email}</p>
             </div>
           </div>

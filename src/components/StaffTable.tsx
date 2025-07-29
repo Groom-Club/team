@@ -1,6 +1,8 @@
 import { useState } from "react";
 import StaffTableRow, { StaffMember } from "./StaffTableRow";
 import EditStaffModal from "./EditStaffModal";
+import DeleteStaffModal from "./DeleteStaffModal";
+import useApi from "@/api";
 
 type Props = {
   staffData: StaffMember[];
@@ -8,11 +10,18 @@ type Props = {
 };
 const StaffTable = ({ staffData, setStaffData }: Props) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
+  const api = useApi();
 
   const handleEditStaff = (staff: StaffMember) => {
     setSelectedStaff(staff);
     setIsEditModalOpen(true);
+  };
+
+  const handleDeleteStaff = (staff: StaffMember) => {
+    setSelectedStaff(staff);
+    setIsDeleteModalOpen(true);
   };
 
   const handleCloseModal = () => {
@@ -20,13 +29,24 @@ const StaffTable = ({ staffData, setStaffData }: Props) => {
     setSelectedStaff(null);
   };
 
+  const handleCloseDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setSelectedStaff(null);
+  };
+
   const handleSaveStaff = (updatedStaff: StaffMember) => {
     setStaffData(
       staffData.map((staff) =>
-        staff.id === updatedStaff.id ? updatedStaff : staff,
-      ),
+        staff.id === updatedStaff.id ? updatedStaff : staff
+      )
     );
     handleCloseModal();
+  };
+
+  const handleConfirmDelete = async (staffToDelete: StaffMember) => {
+    // let res= await api.tcps.
+    // setStaffData(staffData.filter((staff) => staff.id !== staffToDelete.id));
+    // handleCloseDeleteModal();
   };
 
   return (
@@ -52,6 +72,7 @@ const StaffTable = ({ staffData, setStaffData }: Props) => {
                   key={staff.id}
                   staff={staff}
                   onEditStaff={handleEditStaff}
+                  onDeleteStaff={handleDeleteStaff}
                 />
               ))}
           </tbody>
@@ -63,6 +84,12 @@ const StaffTable = ({ staffData, setStaffData }: Props) => {
         onClose={handleCloseModal}
         staff={selectedStaff}
         onSave={handleSaveStaff}
+      />
+      <DeleteStaffModal
+        isOpen={isDeleteModalOpen}
+        onClose={handleCloseDeleteModal}
+        staff={selectedStaff}
+        onDelete={handleConfirmDelete}
       />
     </>
   );

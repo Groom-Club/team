@@ -32,7 +32,6 @@ function Home() {
   const handleOpenAddStaffModal = () => setIsAddStaffModalOpen(true);
   const handleCloseAddStaffModal = () => setIsAddStaffModalOpen(false);
   const handleSaveStaff = (staffMember: StaffMember) => {
-    console.log(staffMember, "staffMember");
     setTcps([...tcps, staffMember]);
     handleCloseAddStaffModal();
   };
@@ -83,8 +82,8 @@ function Home() {
             <StaffTable staffData={tcps} setStaffData={setTcps} />
           </>
         ) : (
-          <div className="flex gap-6 max-h-min overflow-auto">
-            <div className="w-1/3 h-[760px]">
+          <div className="flex gap-6">
+            <div className="w-1/3 sticky top-6 h-fit">
               <StaffListPanel
                 staffData={tcps}
                 activeStaffId={activeStaff}
