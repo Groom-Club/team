@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useDebounce } from "@/lib/useDebounce";
 import { useEffect, useState } from "react";
 
 interface TcpData {
@@ -31,42 +32,89 @@ interface AppointmentData {
 }
 
 const TestingPage = () => {
-  const [selectedMember, setSelectedMember] = useState<number | undefined>(
-    undefined
-  );
+  const [selectedMember, setSelectedMember] = useState<string[] | null>(null);
   const [selectedDogs, setSelectedDogs] = useState<number[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [tcps, setTcps] = useState<TcpData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [members, setMembers] = useState<any[]>([]);
   const [dogs, setDogs] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const api = useApi();
-  const getMembers = async () => {
-    const res = await api.test.getMember();
-    setMembers(res.data);
+
+  // Debounce the search query
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  const searchMembers = async (query: string) => {
+    if (!query.trim()) {
+      setMembers([]);
+      return;
+    }
+
+    // Don't search if we have a selected member and the query is empty
+    if (selectedMember && selectedMember.length > 0 && !query.trim()) {
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const res = await api.test.getMember(query);
+      setMembers(res.data);
+    } catch (error) {
+      console.error("Error searching members:", error);
+      setMembers([]);
+    } finally {
+      setIsSearching(false);
+    }
   };
+
   const getDogs = async (memberId: number) => {
     const res = await api.test.getDogs(memberId);
     setDogs(res.data);
   };
+
+  // Effect to trigger search when debounced query changes
   useEffect(() => {
-    getMembers();
-  }, []);
+    // Only search if we don't have a selected member or if the query is not empty
+    if (
+      !selectedMember ||
+      selectedMember.length === 0 ||
+      debouncedSearchQuery.trim()
+    ) {
+      searchMembers(debouncedSearchQuery);
+    }
+  }, [debouncedSearchQuery, selectedMember]);
+
   useEffect(() => {
-    if (selectedMember) {
-      getDogs(selectedMember);
+    if (selectedMember && selectedMember.length > 0) {
+      getDogs(parseInt(selectedMember[0]));
     }
   }, [selectedMember]);
 
   const handleGetAppointments = async () => {
     setIsLoading(true);
-    const res = await api.test.getAppointmentSuggestions(selectedMember, {
-      start_date: selectedDate,
-      dog_ids: selectedDogs,
-    });
+    const res = await api.test.getAppointmentSuggestions(
+      parseInt(selectedMember[0]),
+      {
+        start_date: selectedDate,
+        dog_ids: selectedDogs,
+      }
+    );
     setTcps(res.data);
     setIsLoading(false);
   };
+
+  const handleMemberSearch = (query: string) => {
+    setSearchQuery(query);
+    // If query is empty and we have a selected member, deselect it
+    if (!query.trim() && selectedMember && selectedMember.length > 0) {
+      setSelectedMember(null);
+      setSelectedDogs([]);
+      setDogs([]);
+    }
+  };
+
   const appointments = tcps.reduce((acc, tcp) => {
     return acc.concat(
       ...tcp?.appointments?.map((app) => {
@@ -99,14 +147,26 @@ const TestingPage = () => {
                     ...(members && Array.isArray(members)
                       ? members.map((tcp) => ({
                           label: `${tcp.first_name} ${tcp.last_name}`,
-                          value: tcp.id,
+                          value: tcp.id?.toString(),
                         }))
                       : []),
                   ]}
-                  value={[selectedMember]}
-                  onChange={(value) => setSelectedMember(value[0] as number)}
+                  value={selectedMember}
+                  onChange={(value) => {
+                    setSelectedMember(value);
+                    // Clear search query when member is selected
+                    if (value && value.length > 0) {
+                      setSearchQuery("");
+                    } else {
+                      // When member is deselected, clear dogs and search query
+                      setSelectedDogs([]);
+                      setDogs([]);
+                      setSearchQuery("");
+                    }
+                  }}
                   placeholder="Search for member..."
-                  multiple={false}
+                  onSearch={handleMemberSearch}
+                  isLoading={isSearching}
                 />
               </div>
               <div className="space-y-2">

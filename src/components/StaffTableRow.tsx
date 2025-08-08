@@ -45,6 +45,7 @@ export interface StaffMember {
     tcp_id: number;
   }[];
   photo: any;
+  is_active?: boolean;
 }
 
 interface StaffTableRowProps {
@@ -114,10 +115,15 @@ const StaffTableRow = ({
       <td className="px-3 py-4 text-neutral-700">
         {staff?.max_travel_time_mins}
       </td>
-      <td className="px-3 py-4 text-neutral-700">
-        {staff?.max_travel_time_from_start_geo_location_mins}
-      </td>
+
       <td className="px-3 py-4 text-neutral-700">{staff?.buffer_time_mins}</td>
+      <td
+        className={`px-3 py-4 ${
+          staff?.is_active ? "text-green-500" : "text-red-500"
+        }`}
+      >
+        {staff?.is_active ? "Active" : "Inactive"}
+      </td>
       <td className="py-4 pl-3 pr-6">
         <div className="flex justify-end">
           <button

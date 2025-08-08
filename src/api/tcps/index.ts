@@ -54,6 +54,11 @@ const useTcpsApi = () => {
       params: { token: import.meta.env.VITE_XANO_WRITE_TOKEN, ...params },
     });
   };
+  const deleteStaffMember = (tcp_id: number, params?: any) => {
+    return axios.delete(`/tcps/${tcp_id}`, {
+      params: { token: import.meta.env.VITE_XANO_WRITE_TOKEN, ...params },
+    });
+  };
 
   return {
     getTcps,
@@ -64,6 +69,7 @@ const useTcpsApi = () => {
     createStaffMember,
     updateStaffMember,
     uploadTcpPhoto,
+    deleteStaffMember,
   };
 };
 

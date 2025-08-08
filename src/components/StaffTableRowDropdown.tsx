@@ -84,15 +84,6 @@ const StaffTableRowDropdown = ({
           View detail
         </button>
         <button
-          className="flex w-full items-center px-4 py-3 text-sm text-neutral-900 hover:bg-neutral-50 rounded-md mx-1 my-1 focus:outline-none focus:bg-neutral-100"
-          role="menuitem"
-          tabIndex={1}
-          // onClick={onDeleteStaff}
-        >
-          <ArrowRightToLine size={16} className="mr-3 text-neutral-500" />
-          Transfer upcoming appointments
-        </button>
-        <button
           className="flex w-full items-center px-4 py-3 text-sm text-red-500 hover:bg-neutral-50 rounded-md mx-1 my-1 focus:outline-none focus:bg-neutral-100"
           role="menuitem"
           tabIndex={2}

@@ -1,13 +1,15 @@
 import { format } from "date-fns";
 import { StaffMember } from "./StaffTableRow";
-import {toDate} from "date-fns"
+import { toDate } from "date-fns";
 
 type Props = {
   staffMember: StaffMember;
 };
 
 const OngoingOverrides = ({ staffMember }: Props) => {
-  const OngoingOverrides=staffMember?.schedule_overrides?.filter(override=>toDate(override.override_date)>=new Date())
+  const OngoingOverrides = staffMember?.schedule_overrides?.filter(
+    (override) => toDate(override.override_date) >= new Date()
+  );
   if (OngoingOverrides?.length) {
     return (
       <div className="border border-neutral-200 rounded-lg overflow-hidden">
@@ -19,10 +21,6 @@ const OngoingOverrides = ({ staffMember }: Props) => {
               </th>
               <th className="text-left py-3 px-4 text-sm font-medium text-neutral-700">
                 Working Hours
-              </th>
-
-              <th className="text-left py-3 px-4 text-sm font-medium text-neutral-700">
-                Status
               </th>
             </tr>
           </thead>
@@ -41,18 +39,6 @@ const OngoingOverrides = ({ staffMember }: Props) => {
                     {isWorking
                       ? `${override.start_time} – ${override.end_time}`
                       : "Not working"}
-                  </td>
-
-                  <td className="py-3 px-4 text-sm">
-                    {override.start_time ? (
-                      <span className="text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-medium">
-                        Available
-                      </span>
-                    ) : (
-                      <span className="text-red-600 bg-red-50 px-2 py-1 rounded-full text-xs font-medium">
-                        Unavailable
-                      </span>
-                    )}
                   </td>
                 </tr>
               );

@@ -19,31 +19,31 @@ const StaffListPanel = ({
         </h2>
       </div>
       <div className="overflow-y-auto max-h-[calc(100vh-180px)]">
-        {staffData.map((staff) => (
-          <div
-            key={staff.id}
-            className={`flex items-center gap-3 p-4 cursor-pointer transition-all hover:bg-neutral-50 ${
-              activeStaffId === staff.id ? "bg-[#FCF9F5] shadow-sm" : ""
-            }`}
-            onClick={() => onSelectStaff(staff.id)}
-          >
+        {staffData
+          ?.filter((staff) => staff?.is_active)
+          .map((staff) => (
             <div
-              className="h-10 w-10 rounded-full flex items-center justify-center text-white font-medium"
-              style={{ backgroundColor: getAvatarColor(staff.id) }}
+              key={staff.id}
+              className={`flex items-center gap-3 p-4 cursor-pointer transition-all hover:bg-neutral-50 ${
+                activeStaffId === staff.id ? "bg-[#FCF9F5] shadow-sm" : ""
+              }`}
+              onClick={() => onSelectStaff(staff.id)}
             >
-              {staff?.first_name?.[0]}
-              {staff?.last_name?.[0]}
+              <div
+                className="h-10 w-10 rounded-full flex items-center justify-center text-white font-medium"
+                style={{ backgroundColor: getAvatarColor(staff.id) }}
+              >
+                {staff?.first_name?.[0]}
+                {staff?.last_name?.[0]}
+              </div>
+              <div>
+                <p className="font-medium text-neutral-900">
+                  {staff?.first_name} {staff?.last_name}
+                </p>
+                <p className="text-sm text-neutral-500">{staff.email}</p>
+              </div>
             </div>
-            <div>
-              <p className="font-medium text-neutral-900">
-                {staff?.first_name}
-                {""}
-                {staff?.last_name}
-              </p>
-              <p className="text-sm text-neutral-500">{staff.email}</p>
-            </div>
-          </div>
-        ))}
+          ))}
       </div>
     </div>
   );

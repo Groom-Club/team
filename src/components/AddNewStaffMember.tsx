@@ -12,6 +12,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { useDebounce } from "@/lib/useDebounce";
+import { Switch } from "./ui/switch";
 
 // Zod schema for form validation
 const staffMemberSchema = z.object({
@@ -45,6 +46,10 @@ const staffMemberSchema = z.object({
     .number()
     .min(0, "Travel time must be 0 or greater")
     .optional(),
+  max_travel_time_mins: z.coerce
+    .number()
+    .min(0, "Travel time must be 0 or greater")
+    .optional(),
   start_location: z.array(z.number()).optional(),
   end_location: z.array(z.number()).optional(),
   endLocation: z.string().optional(),
@@ -52,6 +57,7 @@ const staffMemberSchema = z.object({
   about: z.string().optional(),
   preferred_breeds: z.array(z.number()).optional(),
   restricted_breeds: z.array(z.number()).optional(),
+  is_active: z.boolean().optional(),
 });
 
 type StaffMemberFormData = z.infer<typeof staffMemberSchema>;
@@ -149,6 +155,7 @@ const AddNewStaffMember = ({
         undefined,
       max_travel_time_to_end_geo_location_mins:
         selectedStaff?.max_travel_time_to_end_geo_location_mins || undefined,
+      max_travel_time_mins: selectedStaff?.max_travel_time_mins || undefined,
       start_location: selectedStaff?.start_location || [],
       end_location: selectedStaff?.end_location || [],
       endLocation: selectedStaff?.endLocation || "",
@@ -156,6 +163,7 @@ const AddNewStaffMember = ({
       about: selectedStaff?.about || "",
       preferred_breeds: selectedStaff?.preferred_breeds || [],
       restricted_breeds: selectedStaff?.restricted_breeds || [],
+      is_active: selectedStaff?.is_active || false,
     },
   });
 
@@ -170,6 +178,7 @@ const AddNewStaffMember = ({
     start_location,
     endLocation,
     startLocation,
+    is_active,
   } = watchedValues;
 
   const onSubmit = async (data: StaffMemberFormData) => {
@@ -229,9 +238,18 @@ const AddNewStaffMember = ({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 max-w-4xl">
       {/* Profile Section */}
       <section className="bg-white p-6 rounded-xl shadow-sm">
-        <div className="flex items-center gap-4 mb-6">
-          <User className="h-6 w-6 text-groom-charcoal" />
-          <h2 className="text-xl font-semibold text-groom-charcoal">Profile</h2>
+        <div className="flex justify-between">
+          <div className="flex items-center gap-4 mb-6">
+            <User className="h-6 w-6 text-groom-charcoal" />
+            <h2 className="text-xl font-semibold text-groom-charcoal">
+              Profile
+            </h2>
+          </div>
+          <Switch
+            checked={is_active}
+            onCheckedChange={(val) => setValue("is_active", val)}
+            className="data-[state=checked]:bg-green-500"
+          />
         </div>
 
         <div className="flex flex-col md:flex-row gap-8">
@@ -369,7 +387,27 @@ const AddNewStaffMember = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="maxTravelTimeMinutes">
+                Max travel time (minutes)
+              </Label>
+              <Input
+                id="maxTravelTimeMinutes"
+                type="number"
+                placeholder="Enter max travel time"
+                min="0"
+                {...register("max_travel_time_mins", {
+                  valueAsNumber: true,
+                })}
+                className={errors.max_travel_time_mins ? "border-red-500" : ""}
+              />
+              {errors.max_travel_time_mins && (
+                <p className="text-sm text-red-500">
+                  {errors.max_travel_time_mins.message}
+                </p>
+              )}
+            </div>
             <div className="space-y-2">
               <Label htmlFor="maxTravelTimeFromStart">
                 Max travel time from start (minutes)
@@ -569,14 +607,6 @@ const AddNewStaffMember = ({
 
       {/* Form Actions */}
       <div className="flex justify-end gap-4 pt-6">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => reset()}
-          disabled={isSubmitting}
-        >
-          Reset
-        </Button>
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Saving..." : "Save Staff Member"}
         </Button>

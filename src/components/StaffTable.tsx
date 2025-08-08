@@ -44,9 +44,9 @@ const StaffTable = ({ staffData, setStaffData }: Props) => {
   };
 
   const handleConfirmDelete = async (staffToDelete: StaffMember) => {
-    // let res= await api.tcps.
-    // setStaffData(staffData.filter((staff) => staff.id !== staffToDelete.id));
-    // handleCloseDeleteModal();
+    let res = await api.tcps.deleteStaffMember(staffToDelete.id);
+    handleCloseDeleteModal();
+    setStaffData(staffData.filter((staff) => staff.id !== staffToDelete.id));
   };
 
   return (
@@ -58,9 +58,9 @@ const StaffTable = ({ staffData, setStaffData }: Props) => {
               <th className="py-3 pl-6 pr-3">Total Care Partner</th>
               <th className="px-3 py-3">Email</th>
               <th className="px-3 py-3">Capacity</th>
-              <th className="px-3 py-3">Travel time</th>
               <th className="px-3 py-3">Max travel time</th>
               <th className="px-3 py-3">Buffer time (minutes)</th>
+              <th className="px-3 py-3">Status</th>
               <th className="py-3 pl-3 pr-6 text-right">Actions</th>
             </tr>
           </thead>

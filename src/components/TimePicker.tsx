@@ -62,7 +62,9 @@ const TimePicker = ({
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
       <div
-        className={`flex items-center w-full cursor-${disabled ? "not-allowed" : "pointer"}`}
+        className={`flex items-center w-full cursor-${
+          disabled ? "not-allowed" : "pointer"
+        }`}
         onClick={toggleDropdown}
       >
         <input
@@ -71,7 +73,9 @@ const TimePicker = ({
           onChange={handleInputChange}
           onBlur={handleInputBlur}
           disabled={disabled}
-          className={`w-20 px-2 py-1 text-sm border border-neutral-200 rounded ${disabled ? "bg-neutral-100 text-neutral-400" : "bg-white"}`}
+          className={`w-20 px-2 py-1 text-sm border border-neutral-200 rounded ${
+            disabled ? "bg-neutral-100 text-neutral-400" : "bg-white"
+          }`}
           readOnly
         />
         <div className="absolute right-1 pointer-events-none text-neutral-400">
@@ -98,17 +102,35 @@ const TimePicker = ({
 
 function generateTimeOptions() {
   const options: string[] = [];
-  const periods = ["AM", "PM"];
 
-  for (let period of periods) {
-    for (let hour = 1; hour <= 12; hour++) {
-      for (let minute = 0; minute < 60; minute += 15) {
-        const formattedHour = hour;
-        const formattedMinute = minute.toString().padStart(2, "0");
-        options.push(`${formattedHour}:${formattedMinute} ${period}`);
-      }
+  // Generate times from 6:00 AM to 8:00 PM
+  // AM times: 6:00 AM to 11:45 AM
+  for (let hour = 6; hour <= 11; hour++) {
+    for (let minute = 0; minute < 60; minute += 15) {
+      const formattedHour = hour;
+      const formattedMinute = minute.toString().padStart(2, "0");
+      options.push(`${formattedHour}:${formattedMinute} AM`);
     }
   }
+
+  // PM times: 12:00 PM to 8:00 PM
+  // 12:00 PM to 12:45 PM
+  for (let minute = 0; minute < 60; minute += 15) {
+    const formattedMinute = minute.toString().padStart(2, "0");
+    options.push(`12:${formattedMinute} PM`);
+  }
+
+  // 1:00 PM to 7:45 PM
+  for (let hour = 1; hour <= 7; hour++) {
+    for (let minute = 0; minute < 60; minute += 15) {
+      const formattedHour = hour;
+      const formattedMinute = minute.toString().padStart(2, "0");
+      options.push(`${formattedHour}:${formattedMinute} PM`);
+    }
+  }
+
+  // 8:00 PM only
+  options.push("8:00 PM");
 
   return options;
 }
