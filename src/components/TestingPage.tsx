@@ -37,54 +37,58 @@ const TestingPage = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [tcps, setTcps] = useState<TcpData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [members, setMembers] = useState<any[]>([]);
+  const [allMembers, setAllMembers] = useState<any[]>([]);
+  const [filteredMembers, setFilteredMembers] = useState<any[]>([]);
   const [dogs, setDogs] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
   const api = useApi();
 
   // Debounce the search query
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  const searchMembers = async (query: string) => {
-    if (!query.trim()) {
-      setMembers([]);
-      return;
-    }
+  // Load all members on component mount
+  useEffect(() => {
+    const loadAllMembers = async () => {
+      setIsLoadingMembers(true);
+      try {
+        const res = await api.test.getMember();
+        setAllMembers(res.data);
+        setFilteredMembers(res.data);
+      } catch (error) {
+        console.error("Error loading members:", error);
+        setAllMembers([]);
+        setFilteredMembers([]);
+      } finally {
+        setIsLoadingMembers(false);
+      }
+    };
 
-    // Don't search if we have a selected member and the query is empty
-    if (selectedMember && selectedMember.length > 0 && !query.trim()) {
-      return;
-    }
+    loadAllMembers();
+  }, []);
 
-    setIsSearching(true);
-    try {
-      const res = await api.test.getMember(query);
-      setMembers(res.data);
-    } catch (error) {
-      console.error("Error searching members:", error);
-      setMembers([]);
-    } finally {
-      setIsSearching(false);
+  // Filter members based on search query
+  useEffect(() => {
+    if (!debouncedSearchQuery.trim()) {
+      setFilteredMembers(allMembers);
+    } else {
+      const filtered = allMembers.filter((member) => {
+        const firstName = member.first_name?.toLowerCase() || "";
+        const lastName = member.last_name?.toLowerCase() || "";
+        const searchLower = debouncedSearchQuery.toLowerCase();
+
+        return (
+          firstName.includes(searchLower) || lastName.includes(searchLower)
+        );
+      });
+      setFilteredMembers(filtered);
     }
-  };
+  }, [debouncedSearchQuery, allMembers]);
 
   const getDogs = async (memberId: number) => {
     const res = await api.test.getDogs(memberId);
     setDogs(res.data);
   };
-
-  // Effect to trigger search when debounced query changes
-  useEffect(() => {
-    // Only search if we don't have a selected member or if the query is not empty
-    if (
-      !selectedMember ||
-      selectedMember.length === 0 ||
-      debouncedSearchQuery.trim()
-    ) {
-      searchMembers(debouncedSearchQuery);
-    }
-  }, [debouncedSearchQuery, selectedMember]);
 
   useEffect(() => {
     if (selectedMember && selectedMember.length > 0) {
@@ -144,8 +148,8 @@ const TestingPage = () => {
                 <Label htmlFor="member">Member</Label>
                 <AutoCompleteSelect
                   options={[
-                    ...(members && Array.isArray(members)
-                      ? members.map((tcp) => ({
+                    ...(filteredMembers && Array.isArray(filteredMembers)
+                      ? filteredMembers.map((tcp) => ({
                           label: `${tcp.first_name} ${tcp.last_name}`,
                           value: tcp.id?.toString(),
                         }))
@@ -166,7 +170,7 @@ const TestingPage = () => {
                   }}
                   placeholder="Search for member..."
                   onSearch={handleMemberSearch}
-                  isLoading={isSearching}
+                  isLoading={isLoadingMembers}
                 />
               </div>
               <div className="space-y-2">
