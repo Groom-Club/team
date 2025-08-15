@@ -424,7 +424,10 @@ const ShiftScheduleEditor = ({
         </div>
 
         {activeTab === "ongoing" ? (
-          <OngoingOverrides staffMember={staffMember} />
+          <OngoingOverrides
+            staffMember={staffMember}
+            updateStaffMember={updateStaffMember}
+          />
         ) : (
           <DateOverrideHistoryTable staffMember={staffMember} />
         )}

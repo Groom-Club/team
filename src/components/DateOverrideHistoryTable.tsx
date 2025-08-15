@@ -1,6 +1,6 @@
-import { format } from "date-fns";
+import { format, toDate } from "date-fns";
+import { useMemo } from "react";
 import { StaffMember } from "./StaffTableRow";
-import { toDate } from "date-fns";
 
 type Props = {
   staffMember: StaffMember;
@@ -9,6 +9,13 @@ type Props = {
 const HistoryOverrides = ({ staffMember }: Props) => {
   const HistoryOverrides = staffMember?.schedule_overrides?.filter(
     (override) => toDate(override.override_date) < new Date()
+  );
+  const sortedOverrides = useMemo(
+    () =>
+      HistoryOverrides?.sort((a, b) =>
+        a.override_date.localeCompare(b.override_date)
+      ),
+    [HistoryOverrides]
   );
   if (HistoryOverrides?.length) {
     return (
@@ -22,14 +29,10 @@ const HistoryOverrides = ({ staffMember }: Props) => {
               <th className="text-left py-3 px-4 text-sm font-medium text-neutral-700">
                 Working Hours
               </th>
-
-              <th className="text-left py-3 px-4 text-sm font-medium text-neutral-700">
-                Status
-              </th>
             </tr>
           </thead>
           <tbody>
-            {HistoryOverrides.map((override, index) => {
+            {sortedOverrides?.map((override, index) => {
               const isWorking = override.override_type === "working";
               return (
                 <tr
@@ -43,18 +46,6 @@ const HistoryOverrides = ({ staffMember }: Props) => {
                     {isWorking
                       ? `${override.start_time} – ${override.end_time}`
                       : "Not working"}
-                  </td>
-
-                  <td className="py-3 px-4 text-sm">
-                    {override.start_time ? (
-                      <span className="text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-medium">
-                        Available
-                      </span>
-                    ) : (
-                      <span className="text-red-600 bg-red-50 px-2 py-1 rounded-full text-xs font-medium">
-                        Unavailable
-                      </span>
-                    )}
                   </td>
                 </tr>
               );

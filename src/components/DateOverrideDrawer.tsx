@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from "react";
 import {
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Trash2,
-  Trash,
-} from "lucide-react";
+  addMonths,
+  format,
+  getDay,
+  isBefore,
+  isSameDay,
+  subMonths,
+} from "date-fns";
+import { ChevronLeft, ChevronRight, Plus, Trash2, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import TimePicker from "./TimePicker";
-import { format, addMonths, subMonths, isSameDay, getDay,isBefore, } from "date-fns";
 import { Button } from "./ui/button";
 
 interface WorkingHours {
@@ -28,6 +28,13 @@ interface DateOverrideDrawerProps {
   staffName?: string;
   staffId?: number;
   onSave: (dateOverrides: DateOverride[]) => void;
+  editingOverride?: {
+    id: number;
+    override_date: string;
+    override_type: string;
+    start_time: string;
+    end_time: string;
+  };
 }
 
 const DateOverrideDrawer = ({
@@ -36,12 +43,45 @@ const DateOverrideDrawer = ({
   staffName,
   staffId,
   onSave,
+  editingOverride,
 }: DateOverrideDrawerProps) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [dateOverrides, setDateOverrides] = useState<DateOverride[]>([]);
   // Service areas removed as per requirements
+
+  // Initialize with editing data if provided
+  useEffect(() => {
+    if (editingOverride) {
+      const editDate = new Date(editingOverride.override_date);
+      setCurrentMonth(editDate);
+      setSelectedDate(editDate);
+      setSelectedDates([editDate]);
+
+      const overrideData: DateOverride = {
+        date: editDate,
+        is_working: editingOverride.override_type === "working",
+        workingHours:
+          editingOverride.override_type === "working" &&
+          editingOverride.start_time &&
+          editingOverride.end_time
+            ? {
+                startTime: editingOverride.start_time,
+                endTime: editingOverride.end_time,
+              }
+            : null,
+      };
+
+      setDateOverrides([overrideData]);
+    } else {
+      // Reset to default state for creating new overrides
+      setCurrentMonth(new Date());
+      setSelectedDates([]);
+      setSelectedDate(null);
+      setDateOverrides([]);
+    }
+  }, [editingOverride]);
 
   const handlePrevMonth = () => {
     setCurrentMonth(subMonths(currentMonth, 1));
@@ -55,19 +95,29 @@ const DateOverrideDrawer = ({
     if (isSameDay(selectedDate, date)) {
       return;
     }
+
     setSelectedDate(date);
-    if(selectedDates.some((d)=>isSameDay(d,date))){
-      return
+
+    // Check if we're editing and if the new date already has an override
+    const existingOverride = dateOverrides.find((d) => isSameDay(d.date, date));
+
+    if (existingOverride) {
+      // Date already has an override, just select it
+      return;
     }
-    setSelectedDates([...selectedDates, date]);
-    setDateOverrides([
-      ...dateOverrides,
-      {
-        date,
-        workingHours: null,
-        is_working: false,
-      },
-    ]);
+
+    // Add new date to selection
+    if (!selectedDates.some((d) => isSameDay(d, date))) {
+      setSelectedDates([...selectedDates, date]);
+      setDateOverrides([
+        ...dateOverrides,
+        {
+          date,
+          workingHours: null,
+          is_working: false,
+        },
+      ]);
+    }
   };
 
   // Check if staff normally works on a given day
@@ -100,14 +150,39 @@ const DateOverrideDrawer = ({
         },
       ]);
     } else {
-      // Update existing override if it was set to not working
+      // Update existing override
       const updatedOverrides = [...dateOverrides];
-      if (updatedOverrides[existingOverrideIndex].workingHours === null) {
-        updatedOverrides[existingOverrideIndex].workingHours =
-          defaultWorkingHours;
-        updatedOverrides[existingOverrideIndex].is_working = true;
-        setDateOverrides(updatedOverrides);
+      updatedOverrides[existingOverrideIndex].workingHours =
+        defaultWorkingHours;
+      updatedOverrides[existingOverrideIndex].is_working = true;
+      setDateOverrides(updatedOverrides);
+    }
+  };
+
+  // Toggle working status for a date (working <-> not working)
+  const handleToggleWorkingStatus = (date: Date) => {
+    const existingOverrideIndex = dateOverrides.findIndex((override) =>
+      isSameDay(override.date, date)
+    );
+
+    if (existingOverrideIndex !== -1) {
+      const updatedOverrides = [...dateOverrides];
+      const currentOverride = updatedOverrides[existingOverrideIndex];
+
+      if (currentOverride.is_working) {
+        // Change from working to not working
+        currentOverride.is_working = false;
+        currentOverride.workingHours = null;
+      } else {
+        // Change from not working to working
+        currentOverride.is_working = true;
+        currentOverride.workingHours = {
+          startTime: "9:00 AM",
+          endTime: "5:00 PM",
+        };
       }
+
+      setDateOverrides(updatedOverrides);
     }
   };
 
@@ -120,6 +195,7 @@ const DateOverrideDrawer = ({
     if (existingOverrideIndex !== -1) {
       const updatedOverrides = [...dateOverrides];
       updatedOverrides[existingOverrideIndex].workingHours = null;
+      updatedOverrides[existingOverrideIndex].is_working = false;
       setDateOverrides(updatedOverrides);
     }
   };
@@ -158,9 +234,11 @@ const DateOverrideDrawer = ({
   const handleSave = () => {
     onSave(dateOverrides);
     onClose();
-    setSelectedDate(null)
-    setSelectedDates([])
-    setDateOverrides([])
+
+    // Reset state after saving
+    setSelectedDate(null);
+    setSelectedDates([]);
+    setDateOverrides([]);
   };
 
   // Generate calendar days
@@ -194,11 +272,13 @@ const DateOverrideDrawer = ({
 
     return days;
   };
-  const handleRemoveDate=(date:Date)=>{
-    setDateOverrides(dateOverrides.filter((override)=>!isSameDay(override.date,date)))
-    setSelectedDates(selectedDates.filter((d)=>!isSameDay(d,date)))
-    setSelectedDate(null)
-  }
+  const handleRemoveDate = (date: Date) => {
+    setDateOverrides(
+      dateOverrides.filter((override) => !isSameDay(override.date, date))
+    );
+    setSelectedDates(selectedDates.filter((d) => !isSameDay(d, date)));
+    setSelectedDate(null);
+  };
 
   const calendarDays = generateCalendarDays();
   const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -226,7 +306,7 @@ const DateOverrideDrawer = ({
           </button>
           <div className="ml-8">
             <h2 className="text-2xl font-bold text-groom-charcoal mb-2">
-              Add date override
+              {editingOverride ? "Edit date override" : "Add date override"}
             </h2>
             <p className="text-neutral-600">
               Date override updates the working hours and online booking
@@ -298,7 +378,7 @@ const DateOverrideDrawer = ({
                           ? "bg-groom-yellow/30 text-groom-charcoal"
                           : "hover:bg-neutral-100"
                       }`}
-                      disabled={isBefore(day,new Date())}
+                      disabled={isBefore(day, new Date())}
                     >
                       {day.getDate()}
                     </button>
@@ -342,13 +422,25 @@ const DateOverrideDrawer = ({
                         <label className="block text-sm font-medium text-neutral-700">
                           Working hours
                         </label>
-                        <button
-                          onClick={() => handleRemoveWorkingHours(selectedDate)}
-                          className="text-neutral-400 hover:text-neutral-600"
-                          aria-label="Remove working hours"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() =>
+                              handleToggleWorkingStatus(selectedDate)
+                            }
+                            className="text-neutral-600 underline hover:text-neutral-900 text-sm"
+                          >
+                            Change to not working
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleRemoveWorkingHours(selectedDate)
+                            }
+                            className="text-neutral-400 hover:text-neutral-600"
+                            aria-label="Remove working hours"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
                       <div className="flex gap-2 items-center mb-4">
                         <TimePicker
@@ -402,11 +494,11 @@ const DateOverrideDrawer = ({
         {/* Footer */}
         <div className="p-6 border-t border-neutral-100 flex justify-end gap-3 sticky bottom-0 bg-white">
           <button
-            onClick={()=>{
-              setSelectedDate(null)
-              setSelectedDates([])
-              setDateOverrides([])
-              onClose()
+            onClick={() => {
+              setSelectedDate(null);
+              setSelectedDates([]);
+              setDateOverrides([]);
+              onClose();
             }}
             className="px-4 py-2 border border-neutral-200 rounded-md text-neutral-700 hover:bg-neutral-50 font-medium"
           >
@@ -421,7 +513,7 @@ const DateOverrideDrawer = ({
                 : "bg-groom-charcoal text-white hover:bg-groom-charcoal/90"
             }`}
           >
-            Save
+            {editingOverride ? "Update" : "Save"}
           </button>
         </div>
       </div>

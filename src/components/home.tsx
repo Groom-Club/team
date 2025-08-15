@@ -18,7 +18,9 @@ function Home() {
     try {
       let res = await api.tcps.getTcps();
       setTcps(res?.data || []);
-      setActiveStaff(res?.data?.[0].id);
+      setActiveStaff(
+        res?.data?.filter((tcp: StaffMember) => tcp.is_active)?.[0].id
+      );
     } catch (error) {
       console.error("Error getting shift data:", error);
       setTcps([]);

@@ -197,7 +197,7 @@ export const AutoCompleteSelect: React.FC<AutoCompleteSelectProps> = ({
             placeholder={placeholder}
             disabled={disabled}
             className={cn(
-              "flex-1 w-full p-0 bg-white border-none focus:outline-none h-auto!",
+              "flex-1 w-full p-0 px-2 bg-white border-none focus:outline-none h-auto!",
               disabled && "bg-gray-50 cursor-not-allowed",
               className
             )}

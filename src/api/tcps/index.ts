@@ -59,6 +59,20 @@ const useTcpsApi = () => {
       params: { token: import.meta.env.VITE_XANO_WRITE_TOKEN, ...params },
     });
   };
+  const deleteScheduleOverride = (override_id: number, params?: any) => {
+    return axios.delete(`/tcp_schedule_overrides/${override_id}`, {
+      params: { token: import.meta.env.VITE_XANO_WRITE_TOKEN, ...params },
+    });
+  };
+  const editScheduleOverride = (
+    override_id: number,
+    overrideData: any,
+    params?: any
+  ) => {
+    return axios.patch(`/tcp_schedule_overrides/${override_id}`, overrideData, {
+      params: { token: import.meta.env.VITE_XANO_WRITE_TOKEN, ...params },
+    });
+  };
 
   return {
     getTcps,
@@ -70,6 +84,8 @@ const useTcpsApi = () => {
     updateStaffMember,
     uploadTcpPhoto,
     deleteStaffMember,
+    deleteScheduleOverride,
+    editScheduleOverride,
   };
 };
 
