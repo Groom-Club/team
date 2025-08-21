@@ -160,9 +160,11 @@ export const AutoCompleteSelect: React.FC<AutoCompleteSelectProps> = ({
         {leftIcon}
 
         {/* Selected items display for both single and multiple selection */}
-        {value && value.length > 0 && (
-          <div className="flex flex-wrap gap-1 p-1">
-            {selected.map((item) => (
+
+        <div className="flex flex-wrap gap-1 p-1">
+          {value &&
+            value.length > 0 &&
+            selected.map((item) => (
               <span
                 key={item.value}
                 className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-gray-100 text-gray-700 rounded-lg border border-gray-200 hover:bg-gray-200 transition-colors"
@@ -183,26 +185,25 @@ export const AutoCompleteSelect: React.FC<AutoCompleteSelectProps> = ({
                 </button>
               </span>
             ))}
-          </div>
-        )}
+          {((!multiple && (!value || value.length === 0)) || multiple) && (
+            <Input
+              ref={inputRef}
+              id={id}
+              type="text"
+              value={getDisplayValue()}
+              onChange={(e) => handleSearch(e.target.value)}
+              onFocus={() => !disabled && setShowSuggestions(true)}
+              placeholder={placeholder}
+              disabled={disabled}
+              className={cn(
+                "w-auto p-0 px-2 bg-white border-none focus:outline-none h-auto!",
+                disabled && "bg-gray-50 cursor-not-allowed",
+                className
+              )}
+            />
+          )}
+        </div>
 
-        {((!multiple && (!value || value.length === 0)) || multiple) && (
-          <Input
-            ref={inputRef}
-            id={id}
-            type="text"
-            value={getDisplayValue()}
-            onChange={(e) => handleSearch(e.target.value)}
-            onFocus={() => !disabled && setShowSuggestions(true)}
-            placeholder={placeholder}
-            disabled={disabled}
-            className={cn(
-              "flex-1 w-full p-0 px-2 bg-white border-none focus:outline-none h-auto!",
-              disabled && "bg-gray-50 cursor-not-allowed",
-              className
-            )}
-          />
-        )}
         {rightIcon}
       </div>
 

@@ -1,15 +1,13 @@
 import { Camera, Save } from "lucide-react";
 import ProfileNavBar from "./ProfileNavBar";
-import { useState } from "react";
-import ProfileImageUploader from "./ProfileImageUploader";
+import { useRef, useState } from "react";
+import ImageCropperModal from "./ImageCropperModal";
 
 const ProfilePage = () => {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
-
-  const handleImageSave = (imageData: string) => {
-    setProfileImage(imageData);
-  };
+  const tempImageInputRef = useRef<HTMLInputElement>(null);
+  const [tempImage, setTempImage] = useState<File | null>(null);
 
   return (
     <div className="bg-groom-cream min-h-screen">
@@ -31,14 +29,30 @@ const ProfilePage = () => {
             </div>
             <button
               className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md hover:bg-groom-light transition-colors"
-              onClick={() => setIsUploaderOpen(true)}
+              onClick={() => tempImageInputRef.current?.click()}
             >
               <Camera className="h-5 w-5 text-groom-charcoal" />
             </button>
-            <ProfileImageUploader
-              isOpen={isUploaderOpen}
+            <input
+              ref={tempImageInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  setTempImage(e.target.files?.[0]);
+                  setIsUploaderOpen(true);
+                }
+              }}
+            />
+            <ImageCropperModal
+              open={isUploaderOpen}
+              image={tempImage}
               onClose={() => setIsUploaderOpen(false)}
-              onImageSave={handleImageSave}
+              onSave={(croppedFile) => {
+                setProfileImage(URL.createObjectURL(croppedFile));
+                setIsUploaderOpen(false);
+              }}
             />
           </div>
           <div className="text-center md:text-left">

@@ -1,10 +1,9 @@
 import useApi from "@/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Calendar, Cat, MapPin, Upload, User } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import ProfileImageUploader from "./ProfileImageUploader";
 import { StaffMember } from "./StaffTableRow";
 import { AutoCompleteSelect } from "./ui/auto-complete";
 import { Button } from "./ui/button";
@@ -13,6 +12,7 @@ import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { useDebounce } from "@/lib/useDebounce";
 import { Switch } from "./ui/switch";
+import ImageCropperModal from "./ImageCropperModal";
 
 // Zod schema for form validation
 const staffMemberSchema = z.object({
@@ -80,7 +80,8 @@ const AddNewStaffMember = ({
   const [startAddressOptions, setStartAddressOptions] = useState<any[]>([]);
   const debouncedEndSearchQuery = useDebounce(endSearchQuery, 500);
   const debouncedStartSearchQuery = useDebounce(startSearchQuery, 500);
-
+  const [tempImage, setTempImage] = useState<File | null>(null);
+  const dpRef = useRef<HTMLInputElement>(null);
   const handleEndAddressSearch = async (query: string) => {
     setEndSearchQuery(query);
   };
@@ -180,6 +181,7 @@ const AddNewStaffMember = ({
     startLocation,
     is_active,
   } = watchedValues;
+  console.log(watchedValues, selectedStaff);
 
   const onSubmit = async (data: StaffMemberFormData) => {
     try {
@@ -256,7 +258,7 @@ const AddNewStaffMember = ({
           {/* Avatar Upload */}
           <div className="flex flex-col items-center">
             <button
-              onClick={() => setIsUploaderOpen(true)}
+              onClick={() => dpRef.current?.click()}
               className="w-24 h-24 rounded-full bg-groom-light flex items-center justify-center mb-2 border-2 border-dashed border-gray-300 overflow-hidden"
               type="button"
             >
@@ -281,14 +283,35 @@ const AddNewStaffMember = ({
             </button>
             <span
               className="text-sm text-gray-500 cursor-pointer"
-              onClick={() => setIsUploaderOpen(true)}
+              onClick={() => dpRef.current?.click()}
             >
               Upload avatar
             </span>
-            <ProfileImageUploader
-              isOpen={isUploaderOpen}
-              onClose={() => setIsUploaderOpen(false)}
-              onImageSave={(image) => setValue("photo", image)}
+            <input
+              type="file"
+              ref={dpRef}
+              accept="image/*"
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  setTempImage(e.target.files[0]);
+                  setIsUploaderOpen(true);
+                }
+              }}
+              className="hidden"
+              id="profile-image-input"
+            />
+            <ImageCropperModal
+              open={isUploaderOpen}
+              image={tempImage}
+              onClose={() => {
+                setTempImage(null);
+                setIsUploaderOpen(false);
+              }}
+              onSave={(image) => {
+                setValue("photo", image);
+                setTempImage(null);
+                setIsUploaderOpen(false);
+              }}
             />
           </div>
 
@@ -360,7 +383,15 @@ const AddNewStaffMember = ({
                 type="number"
                 placeholder="Enter capacity"
                 min="0"
-                {...register("capacity", { valueAsNumber: true })}
+                {...register("capacity", {
+                  setValueAs: (value) => {
+                    if (value === "" || value === null || value === undefined) {
+                      return undefined;
+                    }
+                    const num = Number(value);
+                    return isNaN(num) ? undefined : num;
+                  },
+                })}
                 className={errors.capacity ? "border-red-500" : ""}
               />
               {errors.capacity && (
@@ -376,7 +407,15 @@ const AddNewStaffMember = ({
                 type="number"
                 placeholder="Enter buffer time"
                 min="0"
-                {...register("buffer_time_mins", { valueAsNumber: true })}
+                {...register("buffer_time_mins", {
+                  setValueAs: (value) => {
+                    if (value === "" || value === null || value === undefined) {
+                      return undefined;
+                    }
+                    const num = Number(value);
+                    return isNaN(num) ? undefined : num;
+                  },
+                })}
                 className={errors.buffer_time_mins ? "border-red-500" : ""}
               />
               {errors.buffer_time_mins && (
@@ -398,7 +437,13 @@ const AddNewStaffMember = ({
                 placeholder="Enter max travel time"
                 min="0"
                 {...register("max_travel_time_mins", {
-                  valueAsNumber: true,
+                  setValueAs: (value) => {
+                    if (value === "" || value === null || value === undefined) {
+                      return undefined;
+                    }
+                    const num = Number(value);
+                    return isNaN(num) ? undefined : num;
+                  },
                 })}
                 className={errors.max_travel_time_mins ? "border-red-500" : ""}
               />
@@ -418,7 +463,13 @@ const AddNewStaffMember = ({
                 placeholder="Enter max travel time"
                 min="0"
                 {...register("max_travel_time_from_start_geo_location_mins", {
-                  valueAsNumber: true,
+                  setValueAs: (value) => {
+                    if (value === "" || value === null || value === undefined) {
+                      return undefined;
+                    }
+                    const num = Number(value);
+                    return isNaN(num) ? undefined : num;
+                  },
                 })}
                 className={
                   errors.max_travel_time_from_start_geo_location_mins
@@ -442,7 +493,13 @@ const AddNewStaffMember = ({
                 placeholder="Enter max travel time"
                 min="0"
                 {...register("max_travel_time_to_end_geo_location_mins", {
-                  valueAsNumber: true,
+                  setValueAs: (value) => {
+                    if (value === "" || value === null || value === undefined) {
+                      return undefined;
+                    }
+                    const num = Number(value);
+                    return isNaN(num) ? undefined : num;
+                  },
                 })}
                 className={
                   errors.max_travel_time_to_end_geo_location_mins
@@ -560,10 +617,12 @@ const AddNewStaffMember = ({
             <Label htmlFor="proBreeds">Pro Breeds</Label>
             <AutoCompleteSelect
               id="proBreeds"
-              options={breeds.map((breed) => ({
-                label: breed.name,
-                value: breed.id.toString(),
-              }))}
+              options={breeds
+                ?.filter((breed) => !restricted_breeds?.includes(breed.id))
+                .map((breed) => ({
+                  label: breed.name,
+                  value: breed.id.toString(),
+                }))}
               value={preferred_breeds?.map((breed) => breed.toString()) || []}
               onChange={(value: any[]) => {
                 setValue(
@@ -571,6 +630,7 @@ const AddNewStaffMember = ({
                   value.map((v) => Number(v))
                 );
               }}
+              multiple
             />
             {errors.preferred_breeds && (
               <p className="text-sm text-red-500">
@@ -583,10 +643,12 @@ const AddNewStaffMember = ({
             <Label htmlFor="conBreeds">Con Breeds</Label>
             <AutoCompleteSelect
               id="conBreeds"
-              options={breeds.map((breed) => ({
-                label: breed.name,
-                value: breed.id.toString(),
-              }))}
+              options={breeds
+                ?.filter((breed) => !preferred_breeds?.includes(breed.id))
+                .map((breed) => ({
+                  label: breed.name,
+                  value: breed.id.toString(),
+                }))}
               value={restricted_breeds?.map((breed) => breed.toString()) || []}
               onChange={(value: any[]) => {
                 setValue(
@@ -594,7 +656,7 @@ const AddNewStaffMember = ({
                   value.map((v) => Number(v))
                 );
               }}
-              multiple={true}
+              multiple
             />
             {errors.restricted_breeds && (
               <p className="text-sm text-red-500">

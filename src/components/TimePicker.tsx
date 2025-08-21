@@ -16,7 +16,11 @@ const TimePicker = ({
 }: TimePickerProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value);
+  const [dropdownPosition, setDropdownPosition] = useState<"above" | "below">(
+    "below"
+  );
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLDivElement>(null);
   const timeOptions = generateTimeOptions();
 
   useEffect(() => {
@@ -39,6 +43,24 @@ const TimePicker = ({
     };
   }, []);
 
+  const calculateDropdownPosition = () => {
+    if (!inputRef.current) return;
+
+    const inputRect = inputRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const dropdownHeight = 192; // max-h-48 = 12rem = 192px
+
+    // Check if there's enough space below
+    const spaceBelow = viewportHeight - inputRect.bottom;
+    const spaceAbove = inputRect.top;
+
+    if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+      setDropdownPosition("above");
+    } else {
+      setDropdownPosition("below");
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
@@ -55,6 +77,9 @@ const TimePicker = ({
 
   const toggleDropdown = () => {
     if (!disabled) {
+      if (!isOpen) {
+        calculateDropdownPosition();
+      }
       setIsOpen(!isOpen);
     }
   };
@@ -62,6 +87,7 @@ const TimePicker = ({
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
       <div
+        ref={inputRef}
         className={`flex items-center w-full cursor-${
           disabled ? "not-allowed" : "pointer"
         }`}
@@ -84,7 +110,11 @@ const TimePicker = ({
       </div>
 
       {isOpen && (
-        <div className="absolute z-10 mt-1 w-24 max-h-48 overflow-y-auto bg-white border border-neutral-200 rounded shadow-lg">
+        <div
+          className={`absolute z-10 w-24 max-h-48 overflow-y-auto bg-white border border-neutral-200 rounded shadow-lg ${
+            dropdownPosition === "above" ? "bottom-full mb-1" : "top-full mt-1"
+          }`}
+        >
           {timeOptions.map((time, index) => (
             <div
               key={index}

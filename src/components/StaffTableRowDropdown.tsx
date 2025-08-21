@@ -18,13 +18,34 @@ const StaffTableRowDropdown = ({
 }: StaffTableRowDropdownProps) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ top: 0, right: 0 });
+  const [placement, setPlacement] = useState<"bottom" | "top">("bottom");
 
   useEffect(() => {
-    // Position the dropdown below the trigger button
+    // Position the dropdown with overflow detection
     if (isOpen && triggerRef.current && dropdownRef.current) {
       const triggerRect = triggerRef.current.getBoundingClientRect();
+      const dropdownHeight = 120; // Approximate height of the dropdown
+      const viewportHeight = window.innerHeight;
+      const scrollY = window.scrollY;
+
+      // Check if dropdown would overflow below the viewport
+      const wouldOverflowBelow =
+        triggerRect.bottom + dropdownHeight > viewportHeight + scrollY;
+
+      // Determine placement (top or bottom)
+      const newPlacement = wouldOverflowBelow ? "top" : "bottom";
+      setPlacement(newPlacement);
+
+      // Calculate position based on placement
+      let top: number;
+      if (newPlacement === "bottom") {
+        top = triggerRect.bottom + scrollY + 5;
+      } else {
+        top = triggerRect.top + scrollY - dropdownHeight - 5;
+      }
+
       setPosition({
-        top: triggerRect.bottom + window.scrollY + 5,
+        top,
         right: window.innerWidth - triggerRect.right - window.scrollX,
       });
     }

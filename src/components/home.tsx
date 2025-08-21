@@ -33,8 +33,8 @@ function Home() {
 
   const handleOpenAddStaffModal = () => setIsAddStaffModalOpen(true);
   const handleCloseAddStaffModal = () => setIsAddStaffModalOpen(false);
-  const handleSaveStaff = (staffMember: StaffMember) => {
-    setTcps([...tcps, staffMember]);
+  const handleSaveStaff = async () => {
+    await gettcps();
     handleCloseAddStaffModal();
   };
 
@@ -81,7 +81,11 @@ function Home() {
             <div className="flex justify-end mb-4">
               <AddNewStaffButton onClick={handleOpenAddStaffModal} />
             </div>
-            <StaffTable staffData={tcps} setStaffData={setTcps} />
+            <StaffTable
+              staffData={tcps}
+              setStaffData={setTcps}
+              gettcps={gettcps}
+            />
           </>
         ) : (
           <div className="flex gap-6">

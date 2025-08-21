@@ -3,16 +3,19 @@ import StaffTableRow, { StaffMember } from "./StaffTableRow";
 import EditStaffModal from "./EditStaffModal";
 import DeleteStaffModal from "./DeleteStaffModal";
 import useApi from "@/api";
+import { useToast } from "@/components/ui/use-toast";
 
 type Props = {
   staffData: StaffMember[];
   setStaffData: (val: any) => void;
+  gettcps: () => Promise<void>;
 };
-const StaffTable = ({ staffData, setStaffData }: Props) => {
+const StaffTable = ({ staffData, setStaffData, gettcps }: Props) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
   const api = useApi();
+  const { toast } = useToast();
 
   const handleEditStaff = (staff: StaffMember) => {
     setSelectedStaff(staff);
@@ -34,12 +37,8 @@ const StaffTable = ({ staffData, setStaffData }: Props) => {
     setSelectedStaff(null);
   };
 
-  const handleSaveStaff = (updatedStaff: StaffMember) => {
-    setStaffData(
-      staffData.map((staff) =>
-        staff.id === updatedStaff.id ? updatedStaff : staff
-      )
-    );
+  const handleSaveStaff = async (updatedStaff: StaffMember) => {
+    await gettcps();
     handleCloseModal();
   };
 
@@ -47,6 +46,13 @@ const StaffTable = ({ staffData, setStaffData }: Props) => {
     let res = await api.tcps.deleteStaffMember(staffToDelete.id);
     handleCloseDeleteModal();
     setStaffData(staffData.filter((staff) => staff.id !== staffToDelete.id));
+
+    // Show success toast
+    toast({
+      title: "Success",
+      description: "User has been deleted successfully",
+      variant: "default",
+    });
   };
 
   return (

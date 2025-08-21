@@ -38,6 +38,21 @@ const OngoingOverrides = ({ staffMember, updateStaffMember }: Props) => {
     useState<ScheduleOverride | null>(null);
   const api = useApi();
 
+  // Helper function to format military time strings to readable format
+  const formatTime = (timeString: string) => {
+    // Create a date object with the time string (assuming today's date)
+    const today = new Date();
+    const [hours, minutes] = timeString.split(":").map(Number);
+    const dateWithTime = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+      hours,
+      minutes
+    );
+    return format(dateWithTime, "h:mm a");
+  };
+
   const OngoingOverrides: ScheduleOverride[] =
     staffMember?.schedule_overrides?.filter(
       (override) => toDate(override.override_date) >= new Date()
@@ -173,7 +188,9 @@ const OngoingOverrides = ({ staffMember, updateStaffMember }: Props) => {
                     </td>
                     <td className="py-3 px-4 text-sm text-neutral-700">
                       {isWorking
-                        ? `${override.start_time} – ${override.end_time}`
+                        ? `${formatTime(override.start_time)} – ${formatTime(
+                            override.end_time
+                          )}`
                         : "Not working"}
                     </td>
                     <td className="py-3 px-4">
