@@ -163,6 +163,12 @@ const PricingAppointmentsPage = () => {
                   onChange={(e) =>
                     handleAppointmentsChange("lookahead_days", e.target.value)
                   }
+                  step={1}
+                  onKeyDown={(e) => {
+                    if (e.key === "." || e.key === ",") {
+                      e.preventDefault();
+                    }
+                  }}
                   disabled={loading}
                 />
               </div>
@@ -171,7 +177,6 @@ const PricingAppointmentsPage = () => {
                 <Input
                   id="late_day_max"
                   type="number"
-                  step="0.01"
                   placeholder="Enter percentage"
                   value={appointmentsData.late_day_max}
                   onChange={(e) =>
@@ -192,6 +197,12 @@ const PricingAppointmentsPage = () => {
                   onChange={(e) =>
                     handleAppointmentsChange("start_zone_max", e.target.value)
                   }
+                  step={1}
+                  onKeyDown={(e) => {
+                    if (e.key === "." || e.key === ",") {
+                      e.preventDefault();
+                    }
+                  }}
                   disabled={loading}
                 />
               </div>
@@ -207,6 +218,12 @@ const PricingAppointmentsPage = () => {
                   onChange={(e) =>
                     handleAppointmentsChange("end_zone_max", e.target.value)
                   }
+                  step={1}
+                  onKeyDown={(e) => {
+                    if (e.key === "." || e.key === ",") {
+                      e.preventDefault();
+                    }
+                  }}
                   disabled={loading}
                 />
               </div>
@@ -222,6 +239,12 @@ const PricingAppointmentsPage = () => {
                   onChange={(e) =>
                     handleAppointmentsChange("first_appt_bonus", e.target.value)
                   }
+                  step={1}
+                  onKeyDown={(e) => {
+                    if (e.key === "." || e.key === ",") {
+                      e.preventDefault();
+                    }
+                  }}
                   disabled={loading}
                 />
               </div>
@@ -240,6 +263,12 @@ const PricingAppointmentsPage = () => {
                       e.target.value
                     )
                   }
+                  step={1}
+                  onKeyDown={(e) => {
+                    if (e.key === "." || e.key === ",") {
+                      e.preventDefault();
+                    }
+                  }}
                   disabled={loading}
                 />
               </div>
@@ -255,6 +284,12 @@ const PricingAppointmentsPage = () => {
                   onChange={(e) =>
                     handleAppointmentsChange("backtrack_max", e.target.value)
                   }
+                  step={1}
+                  onKeyDown={(e) => {
+                    if (e.key === "." || e.key === ",") {
+                      e.preventDefault();
+                    }
+                  }}
                 />
               </div>
               <div className="space-y-2">
@@ -305,6 +340,12 @@ const PricingAppointmentsPage = () => {
                   onChange={(e) =>
                     handleAppointmentsChange("xl_dog_penalty", e.target.value)
                   }
+                  step={1}
+                  onKeyDown={(e) => {
+                    if (e.key === "." || e.key === ",") {
+                      e.preventDefault();
+                    }
+                  }}
                   disabled={loading}
                 />
               </div>

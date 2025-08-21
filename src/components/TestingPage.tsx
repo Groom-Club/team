@@ -398,7 +398,6 @@ const TestingPage = () => {
 
   const sortedAppointments = useMemo(() => {
     return appointments.sort((a, b) => {
-      console.log(appointmentRankConfig, "appointmentRankConfig");
       if (appointmentRankConfig?.status === "ACTIVE") {
         return a.adjustedTravelTime - b.adjustedTravelTime;
       }
@@ -593,7 +592,11 @@ const TestingPage = () => {
                             </div>
                           )}
                           <div className="text-sm text-neutral-500">
-                            Results: {query.response.length} appointments
+                            Results:{" "}
+                            {query.response?.reduce((acc, val) => {
+                              return acc + val.appointments.length;
+                            }, 0)}{" "}
+                            appointments
                           </div>
                         </div>
                         <div className="text-right">
@@ -667,7 +670,7 @@ const TestingPage = () => {
                             {app.travelTimeMins - app.adjustedTravelTime}
                           </TableCell>
                           <TableCell>{app.adjustedTravelTime}</TableCell>
-                          <TableCell>{app.travelDistance.toFixed(2)}</TableCell>
+                          <TableCell>{app.travelDistance.toFixed(1)}</TableCell>
 
                           <TableCell>${app.totalCost}</TableCell>
                           <TableCell>{app.totalDuration}</TableCell>
