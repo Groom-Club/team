@@ -429,7 +429,10 @@ const ShiftScheduleEditor = ({
             updateStaffMember={updateStaffMember}
           />
         ) : (
-          <DateOverrideHistoryTable staffMember={staffMember} />
+          <DateOverrideHistoryTable
+            staffMember={staffMember}
+            updateStaffMember={updateStaffMember}
+          />
         )}
       </div>
       {/* Copy Working Hours Modal */}

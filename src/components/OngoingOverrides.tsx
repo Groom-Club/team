@@ -16,6 +16,7 @@ import {
 } from "./ui/alert-dialog";
 import DateOverrideDrawer from "./DateOverrideDrawer";
 import useApi from "@/api";
+import { formatTime } from "@/lib/utils";
 
 type Props = {
   staffMember: StaffMember;
@@ -38,20 +39,6 @@ const OngoingOverrides = ({ staffMember, updateStaffMember }: Props) => {
     useState<ScheduleOverride | null>(null);
   const api = useApi();
 
-  // Helper function to format military time strings to readable format
-  const formatTime = (timeString: string) => {
-    // Create a date object with the time string (assuming today's date)
-    const today = new Date();
-    const [hours, minutes] = timeString.split(":").map(Number);
-    const dateWithTime = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate(),
-      hours,
-      minutes
-    );
-    return format(dateWithTime, "h:mm a");
-  };
 
   const OngoingOverrides: ScheduleOverride[] =
     staffMember?.schedule_overrides?.filter(

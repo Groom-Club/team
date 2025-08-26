@@ -24,3 +24,17 @@ export const convertTo12HourFormat = (time: string): string => {
   const parsedTime = parse(time, 'HH:mm', new Date());
   return format(parsedTime, 'h:mm a');
 };
+ // Helper function to format military time strings to readable format
+export const formatTime = (timeString: string) => {
+  // Create a date object with the time string (assuming today's date)
+  const today = new Date();
+  const [hours, minutes] = timeString.split(":").map(Number);
+  const dateWithTime = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+    hours,
+    minutes
+  );
+  return format(dateWithTime, "h:mm a");
+};
