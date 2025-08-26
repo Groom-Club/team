@@ -1,7 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "./input";
-import { X } from "lucide-react";
 
 interface AutoCompleteSelectProps {
   id?: string;
@@ -10,8 +9,8 @@ interface AutoCompleteSelectProps {
     value: string;
     [key: string]: any;
   }[];
-  value: any[] | null;
-  onChange: (value: any[], rest?: { [key: string]: any }) => void;
+  value: string[] | null;
+  onChange: (value: string[], rest?: { [key: string]: any }) => void;
   placeholder?: string;
   className?: string;
   onSearch?: (query: string) => void;
@@ -20,6 +19,10 @@ interface AutoCompleteSelectProps {
   rightIcon?: React.ReactNode;
   containerClassName?: string;
   disabled?: boolean;
+  emptyDataComponent?: (
+    searchQuery: string,
+    onClose: () => void
+  ) => React.ReactNode;
   multiple?: boolean;
   withoutSearch?: boolean;
 }
@@ -37,25 +40,45 @@ export const AutoCompleteSelect: React.FC<AutoCompleteSelectProps> = ({
   rightIcon,
   containerClassName,
   disabled = false,
-  multiple = true,
+  emptyDataComponent,
+  multiple = false,
   withoutSearch = false,
 }) => {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [showSuggestions, setShowSuggestions] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
-  const selectedValues = value || [];
-  const selectedOptions = options.filter((opt) =>
-    selectedValues.includes(opt.value)
-  );
+  const selected = options.filter((opt) => value?.includes(opt.value) || false);
 
   React.useEffect(() => {
-    if (!multiple && selectedOptions.length > 0) {
-      setSearchQuery(selectedOptions[0].label);
+    if (!multiple && selected.length > 0) {
+      setSearchQuery(selected[0].label);
     }
-  }, [selectedOptions, multiple]);
+  }, [selected, multiple]);
+
+  // Handle click outside to close dropdown
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    if (showSuggestions) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showSuggestions]);
 
   const handleSearch = (query: string) => {
+    if (disabled) return;
     setSearchQuery(query);
     onSearch?.(query);
     setShowSuggestions(true);
@@ -65,126 +88,145 @@ export const AutoCompleteSelect: React.FC<AutoCompleteSelectProps> = ({
     const { value: optionValue, ...rest } = option;
 
     if (multiple) {
-      const newValues = selectedValues.includes(optionValue)
-        ? selectedValues.filter((v) => v !== optionValue)
-        : [...selectedValues, optionValue];
+      const currentValues = value || [];
+      const isSelected = currentValues.includes(optionValue);
+
+      let newValues: string[];
+      if (isSelected) {
+        // Remove if already selected
+        newValues = currentValues.filter((v) => v !== optionValue);
+      } else {
+        // Add if not selected
+        newValues = [...currentValues, optionValue];
+      }
+
       onChange(newValues, { ...rest });
-      setSearchQuery("");
+      setSearchQuery(""); // Clear search query for multiple selection
     } else {
+      // Single selection
       onChange([optionValue], { ...rest });
       setSearchQuery(option.label);
       setShowSuggestions(false);
     }
   };
 
-  const handleRemove = (valueToRemove: string) => {
-    const newValues = selectedValues.filter((v) => v !== valueToRemove);
+  const handleRemoveSelected = (selectedValue: string) => {
+    if (disabled || !value) return;
+    const newValues = value.filter((v) => v !== selectedValue);
     onChange(newValues);
+    setSearchQuery(""); // Clear search query when removing items
   };
 
-  const filteredOptions = withoutSearch
-    ? options.filter(
-        (option) => !multiple || !selectedValues.includes(option.value)
-      )
-    : options.filter(
-        (option) =>
-          option.label.toLowerCase().includes(searchQuery.toLowerCase()) &&
-          (!multiple || !selectedValues.includes(option.value))
-      );
+  const filteredOptions = options.filter((option) => {
+    if (withoutSearch) {
+      // Show all options when withoutSearch is true
+      if (multiple) {
+        // For multiple selection, don't show already selected items in dropdown
+        const isSelected = value?.includes(option.value) || false;
+        return !isSelected;
+      }
+      return true;
+    }
+
+    const matchesSearch = option.label
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    if (multiple) {
+      // For multiple selection, don't show already selected items in dropdown
+      const isSelected = value?.includes(option.value) || false;
+      return matchesSearch && !isSelected;
+    }
+    return matchesSearch;
+  });
+
+  const getDisplayValue = () => {
+    if (multiple) {
+      return searchQuery;
+    }
+    return searchQuery;
+  };
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <div
         className={cn(
           `flex items-center ${
             leftIcon || rightIcon ? "px-2" : ""
-          } w-full gap-2 border border-input rounded-md bg-white min-h-[40px]`,
+          } w-full gap-2 border border-primary rounded-md bg-white min-h-[40px]`,
+          !multiple && value && value.length > 0 && "p-1",
           containerClassName
         )}
       >
         {leftIcon}
 
-        {/* Selected items display */}
-        {multiple && selectedOptions.length > 0 && (
-          <div className="flex flex-wrap gap-1 p-1">
-            {selectedOptions.map((option) => (
-              <div
-                key={option.value}
-                className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-md"
+        {/* Selected items display for both single and multiple selection */}
+
+        <div className="flex flex-wrap gap-1 p-1">
+          {value &&
+            value.length > 0 &&
+            selected.map((item) => (
+              <span
+                key={item.value}
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-gray-100 text-gray-700 rounded-lg border border-gray-200 hover:bg-gray-200 transition-colors"
               >
-                <span>{option.label}</span>
+                {item.label}
                 <button
                   type="button"
-                  onClick={() => handleRemove(option.value)}
-                  className="hover:bg-blue-200 rounded-full p-0.5"
+                  onClick={() => handleRemoveSelected(item.value)}
+                  disabled={disabled}
+                  className={cn(
+                    "ml-1.5 text-gray-500 hover:text-gray-700 font-medium",
+                    disabled &&
+                      "text-gray-300 cursor-not-allowed hover:text-gray-300"
+                  )}
+                  aria-label={`Remove ${item.label}`}
                 >
-                  <X size={12} />
+                  ×
                 </button>
-              </div>
+              </span>
             ))}
-          </div>
-        )}
+          {((!multiple && (!value || value.length === 0)) || multiple) && (
+            <Input
+              ref={inputRef}
+              id={id}
+              type="text"
+              value={getDisplayValue()}
+              onChange={(e) => handleSearch(e.target.value)}
+              onFocus={() => !disabled && setShowSuggestions(true)}
+              placeholder={placeholder}
+              disabled={disabled}
+              className={cn(
+                "w-auto p-0 px-2 bg-white border-none focus:outline-none h-auto!",
+                disabled && "bg-gray-50 cursor-not-allowed",
+                className
+              )}
+            />
+          )}
+        </div>
 
-        {!withoutSearch ? (
-          <Input
-            ref={inputRef}
-            id={id}
-            type="text"
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
-            onFocus={() => setShowSuggestions(true)}
-            placeholder={
-              multiple && selectedOptions.length > 0
-                ? "Add more..."
-                : placeholder
-            }
-            className={cn(
-              "flex-1 w-full bg-white border-none h-auto!",
-              className
-            )}
-            disabled={disabled}
-          />
-        ) : (
-          <div
-            className={cn(
-              "flex-1 w-full min-h-[40px] flex items-center px-3 cursor-pointer",
-              className
-            )}
-            onClick={() => setShowSuggestions(!showSuggestions)}
-          >
-            <span className="text-sm text-gray-500">
-              {selectedOptions.length > 0
-                ? `${selectedOptions.length} selected`
-                : placeholder}
-            </span>
-          </div>
-        )}
         {rightIcon}
       </div>
 
-      {showSuggestions && (withoutSearch || searchQuery) && (
-        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
+      {showSuggestions && (searchQuery || withoutSearch) && !disabled && (
+        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-30 overflow-auto">
           {isLoading ? (
             <div className="px-3 py-2 text-sm text-gray-500">Searching...</div>
           ) : filteredOptions.length === 0 ? (
-            <div className="px-3 py-2 text-sm text-gray-500">
-              No options found
-            </div>
+            emptyDataComponent ? (
+              emptyDataComponent(searchQuery, () => setShowSuggestions(false))
+            ) : (
+              <div className="px-3 py-2 text-sm text-gray-500">
+                No options found
+              </div>
+            )
           ) : (
             filteredOptions.map((option) => (
               <div
                 key={option.value}
-                className={cn(
-                  "px-3 py-2 text-sm cursor-pointer hover:bg-gray-100",
-                  selectedValues.includes(option.value) &&
-                    "bg-blue-50 text-blue-600"
-                )}
+                className="px-3 py-2 text-sm cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSelect(option)}
               >
                 {option.label}
-                {selectedValues.includes(option.value) && (
-                  <span className="ml-2 text-blue-600">✓</span>
-                )}
               </div>
             ))
           )}

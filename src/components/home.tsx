@@ -18,7 +18,9 @@ function Home() {
     try {
       let res = await api.tcps.getTcps();
       setTcps(res?.data || []);
-      setActiveStaff(res?.data?.[0].id);
+      setActiveStaff(
+        res?.data?.filter((tcp: StaffMember) => tcp.is_active)?.[0].id
+      );
     } catch (error) {
       console.error("Error getting shift data:", error);
       setTcps([]);
@@ -31,9 +33,8 @@ function Home() {
 
   const handleOpenAddStaffModal = () => setIsAddStaffModalOpen(true);
   const handleCloseAddStaffModal = () => setIsAddStaffModalOpen(false);
-  const handleSaveStaff = (staffMember: StaffMember) => {
-    console.log(staffMember, "staffMember");
-    setTcps([...tcps, staffMember]);
+  const handleSaveStaff = async () => {
+    await gettcps();
     handleCloseAddStaffModal();
   };
 
@@ -80,11 +81,15 @@ function Home() {
             <div className="flex justify-end mb-4">
               <AddNewStaffButton onClick={handleOpenAddStaffModal} />
             </div>
-            <StaffTable staffData={tcps} setStaffData={setTcps} />
+            <StaffTable
+              staffData={tcps}
+              setStaffData={setTcps}
+              gettcps={gettcps}
+            />
           </>
         ) : (
-          <div className="flex gap-6 max-h-min overflow-auto">
-            <div className="w-1/3 h-[760px]">
+          <div className="flex gap-6">
+            <div className="w-1/3 sticky top-6 h-fit">
               <StaffListPanel
                 staffData={tcps}
                 activeStaffId={activeStaff}

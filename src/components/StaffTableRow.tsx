@@ -45,14 +45,20 @@ export interface StaffMember {
     tcp_id: number;
   }[];
   photo: any;
+  is_active?: boolean;
 }
 
 interface StaffTableRowProps {
   staff: StaffMember;
   onEditStaff?: (staff: StaffMember) => void;
+  onDeleteStaff?: (staff: StaffMember) => void;
 }
 
-const StaffTableRow = ({ staff, onEditStaff }: StaffTableRowProps) => {
+const StaffTableRow = ({
+  staff,
+  onEditStaff,
+  onDeleteStaff,
+}: StaffTableRowProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownTriggerRef = useRef<HTMLButtonElement>(null);
 
@@ -99,9 +105,7 @@ const StaffTableRow = ({ staff, onEditStaff }: StaffTableRowProps) => {
           )}
           <div>
             <div className="font-medium text-neutral-900">
-              {staff.first_name}
-              {""}
-              {staff.last_name}
+              {staff.first_name} {staff.last_name}
             </div>
           </div>
         </div>
@@ -111,10 +115,15 @@ const StaffTableRow = ({ staff, onEditStaff }: StaffTableRowProps) => {
       <td className="px-3 py-4 text-neutral-700">
         {staff?.max_travel_time_mins}
       </td>
-      <td className="px-3 py-4 text-neutral-700">
-        {staff?.max_travel_time_from_start_geo_location_mins}
-      </td>
+
       <td className="px-3 py-4 text-neutral-700">{staff?.buffer_time_mins}</td>
+      <td
+        className={`px-3 py-4 ${
+          staff?.is_active ? "text-green-500" : "text-red-500"
+        }`}
+      >
+        {staff?.is_active ? "Active" : "Inactive"}
+      </td>
       <td className="py-4 pl-3 pr-6">
         <div className="flex justify-end">
           <button
@@ -130,6 +139,12 @@ const StaffTableRow = ({ staff, onEditStaff }: StaffTableRowProps) => {
             isOpen={isDropdownOpen}
             onClose={closeDropdown}
             triggerRef={dropdownTriggerRef}
+            onEditStaff={() => {
+              onEditStaff?.(staff);
+            }}
+            onDeleteStaff={() => {
+              onDeleteStaff?.(staff);
+            }}
           />
         </div>
       </td>

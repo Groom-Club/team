@@ -16,7 +16,11 @@ const TimePicker = ({
 }: TimePickerProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value);
+  const [dropdownPosition, setDropdownPosition] = useState<"above" | "below">(
+    "below"
+  );
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLDivElement>(null);
   const timeOptions = generateTimeOptions();
 
   useEffect(() => {
@@ -39,6 +43,24 @@ const TimePicker = ({
     };
   }, []);
 
+  const calculateDropdownPosition = () => {
+    if (!inputRef.current) return;
+
+    const inputRect = inputRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const dropdownHeight = 192; // max-h-48 = 12rem = 192px
+
+    // Check if there's enough space below
+    const spaceBelow = viewportHeight - inputRect.bottom;
+    const spaceAbove = inputRect.top;
+
+    if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+      setDropdownPosition("above");
+    } else {
+      setDropdownPosition("below");
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
@@ -55,6 +77,9 @@ const TimePicker = ({
 
   const toggleDropdown = () => {
     if (!disabled) {
+      if (!isOpen) {
+        calculateDropdownPosition();
+      }
       setIsOpen(!isOpen);
     }
   };
@@ -62,7 +87,10 @@ const TimePicker = ({
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
       <div
-        className={`flex items-center w-full cursor-${disabled ? "not-allowed" : "pointer"}`}
+        ref={inputRef}
+        className={`flex items-center w-full cursor-${
+          disabled ? "not-allowed" : "pointer"
+        }`}
         onClick={toggleDropdown}
       >
         <input
@@ -71,7 +99,9 @@ const TimePicker = ({
           onChange={handleInputChange}
           onBlur={handleInputBlur}
           disabled={disabled}
-          className={`w-20 px-2 py-1 text-sm border border-neutral-200 rounded ${disabled ? "bg-neutral-100 text-neutral-400" : "bg-white"}`}
+          className={`w-20 px-2 py-1 text-sm border border-neutral-200 rounded ${
+            disabled ? "bg-neutral-100 text-neutral-400" : "bg-white"
+          }`}
           readOnly
         />
         <div className="absolute right-1 pointer-events-none text-neutral-400">
@@ -80,7 +110,11 @@ const TimePicker = ({
       </div>
 
       {isOpen && (
-        <div className="absolute z-10 mt-1 w-24 max-h-48 overflow-y-auto bg-white border border-neutral-200 rounded shadow-lg">
+        <div
+          className={`absolute z-10 w-24 max-h-48 overflow-y-auto bg-white border border-neutral-200 rounded shadow-lg ${
+            dropdownPosition === "above" ? "bottom-full mb-1" : "top-full mt-1"
+          }`}
+        >
           {timeOptions.map((time, index) => (
             <div
               key={index}
@@ -98,17 +132,35 @@ const TimePicker = ({
 
 function generateTimeOptions() {
   const options: string[] = [];
-  const periods = ["AM", "PM"];
 
-  for (let period of periods) {
-    for (let hour = 1; hour <= 12; hour++) {
-      for (let minute = 0; minute < 60; minute += 15) {
-        const formattedHour = hour;
-        const formattedMinute = minute.toString().padStart(2, "0");
-        options.push(`${formattedHour}:${formattedMinute} ${period}`);
-      }
+  // Generate times from 6:00 AM to 8:00 PM
+  // AM times: 6:00 AM to 11:45 AM
+  for (let hour = 6; hour <= 11; hour++) {
+    for (let minute = 0; minute < 60; minute += 15) {
+      const formattedHour = hour;
+      const formattedMinute = minute.toString().padStart(2, "0");
+      options.push(`${formattedHour}:${formattedMinute} AM`);
     }
   }
+
+  // PM times: 12:00 PM to 8:00 PM
+  // 12:00 PM to 12:45 PM
+  for (let minute = 0; minute < 60; minute += 15) {
+    const formattedMinute = minute.toString().padStart(2, "0");
+    options.push(`12:${formattedMinute} PM`);
+  }
+
+  // 1:00 PM to 7:45 PM
+  for (let hour = 1; hour <= 7; hour++) {
+    for (let minute = 0; minute < 60; minute += 15) {
+      const formattedHour = hour;
+      const formattedMinute = minute.toString().padStart(2, "0");
+      options.push(`${formattedHour}:${formattedMinute} PM`);
+    }
+  }
+
+  // 8:00 PM only
+  options.push("8:00 PM");
 
   return options;
 }

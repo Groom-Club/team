@@ -1,10 +1,9 @@
 import useApi from "@/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Calendar, Cat, MapPin, Upload, User } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import ProfileImageUploader from "./ProfileImageUploader";
 import { StaffMember } from "./StaffTableRow";
 import { AutoCompleteSelect } from "./ui/auto-complete";
 import { Button } from "./ui/button";
@@ -12,6 +11,8 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { useDebounce } from "@/lib/useDebounce";
+import { Switch } from "./ui/switch";
+import ImageCropperModal from "./ImageCropperModal";
 
 // Zod schema for form validation
 const staffMemberSchema = z.object({
@@ -45,6 +46,10 @@ const staffMemberSchema = z.object({
     .number()
     .min(0, "Travel time must be 0 or greater")
     .optional(),
+  max_travel_time_mins: z.coerce
+    .number()
+    .min(0, "Travel time must be 0 or greater")
+    .optional(),
   start_location: z.array(z.number()).optional(),
   end_location: z.array(z.number()).optional(),
   endLocation: z.string().optional(),
@@ -52,6 +57,7 @@ const staffMemberSchema = z.object({
   about: z.string().optional(),
   preferred_breeds: z.array(z.number()).optional(),
   restricted_breeds: z.array(z.number()).optional(),
+  is_active: z.boolean().optional(),
 });
 
 type StaffMemberFormData = z.infer<typeof staffMemberSchema>;
@@ -74,7 +80,8 @@ const AddNewStaffMember = ({
   const [startAddressOptions, setStartAddressOptions] = useState<any[]>([]);
   const debouncedEndSearchQuery = useDebounce(endSearchQuery, 500);
   const debouncedStartSearchQuery = useDebounce(startSearchQuery, 500);
-
+  const [tempImage, setTempImage] = useState<File | null>(null);
+  const dpRef = useRef<HTMLInputElement>(null);
   const handleEndAddressSearch = async (query: string) => {
     setEndSearchQuery(query);
   };
@@ -149,6 +156,7 @@ const AddNewStaffMember = ({
         undefined,
       max_travel_time_to_end_geo_location_mins:
         selectedStaff?.max_travel_time_to_end_geo_location_mins || undefined,
+      max_travel_time_mins: selectedStaff?.max_travel_time_mins || undefined,
       start_location: selectedStaff?.start_location || [],
       end_location: selectedStaff?.end_location || [],
       endLocation: selectedStaff?.endLocation || "",
@@ -156,6 +164,7 @@ const AddNewStaffMember = ({
       about: selectedStaff?.about || "",
       preferred_breeds: selectedStaff?.preferred_breeds || [],
       restricted_breeds: selectedStaff?.restricted_breeds || [],
+      is_active: selectedStaff?.is_active || false,
     },
   });
 
@@ -170,7 +179,9 @@ const AddNewStaffMember = ({
     start_location,
     endLocation,
     startLocation,
+    is_active,
   } = watchedValues;
+  console.log(watchedValues, selectedStaff);
 
   const onSubmit = async (data: StaffMemberFormData) => {
     try {
@@ -229,16 +240,25 @@ const AddNewStaffMember = ({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 max-w-4xl">
       {/* Profile Section */}
       <section className="bg-white p-6 rounded-xl shadow-sm">
-        <div className="flex items-center gap-4 mb-6">
-          <User className="h-6 w-6 text-groom-charcoal" />
-          <h2 className="text-xl font-semibold text-groom-charcoal">Profile</h2>
+        <div className="flex justify-between">
+          <div className="flex items-center gap-4 mb-6">
+            <User className="h-6 w-6 text-groom-charcoal" />
+            <h2 className="text-xl font-semibold text-groom-charcoal">
+              Profile
+            </h2>
+          </div>
+          <Switch
+            checked={is_active}
+            onCheckedChange={(val) => setValue("is_active", val)}
+            className="data-[state=checked]:bg-green-500"
+          />
         </div>
 
         <div className="flex flex-col md:flex-row gap-8">
           {/* Avatar Upload */}
           <div className="flex flex-col items-center">
             <button
-              onClick={() => setIsUploaderOpen(true)}
+              onClick={() => dpRef.current?.click()}
               className="w-24 h-24 rounded-full bg-groom-light flex items-center justify-center mb-2 border-2 border-dashed border-gray-300 overflow-hidden"
               type="button"
             >
@@ -263,14 +283,35 @@ const AddNewStaffMember = ({
             </button>
             <span
               className="text-sm text-gray-500 cursor-pointer"
-              onClick={() => setIsUploaderOpen(true)}
+              onClick={() => dpRef.current?.click()}
             >
               Upload avatar
             </span>
-            <ProfileImageUploader
-              isOpen={isUploaderOpen}
-              onClose={() => setIsUploaderOpen(false)}
-              onImageSave={(image) => setValue("photo", image)}
+            <input
+              type="file"
+              ref={dpRef}
+              accept="image/*"
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  setTempImage(e.target.files[0]);
+                  setIsUploaderOpen(true);
+                }
+              }}
+              className="hidden"
+              id="profile-image-input"
+            />
+            <ImageCropperModal
+              open={isUploaderOpen}
+              image={tempImage}
+              onClose={() => {
+                setTempImage(null);
+                setIsUploaderOpen(false);
+              }}
+              onSave={(image) => {
+                setValue("photo", image);
+                setTempImage(null);
+                setIsUploaderOpen(false);
+              }}
             />
           </div>
 
@@ -342,7 +383,15 @@ const AddNewStaffMember = ({
                 type="number"
                 placeholder="Enter capacity"
                 min="0"
-                {...register("capacity", { valueAsNumber: true })}
+                {...register("capacity", {
+                  setValueAs: (value) => {
+                    if (value === "" || value === null || value === undefined) {
+                      return undefined;
+                    }
+                    const num = Number(value);
+                    return isNaN(num) ? undefined : num;
+                  },
+                })}
                 className={errors.capacity ? "border-red-500" : ""}
               />
               {errors.capacity && (
@@ -358,7 +407,15 @@ const AddNewStaffMember = ({
                 type="number"
                 placeholder="Enter buffer time"
                 min="0"
-                {...register("buffer_time_mins", { valueAsNumber: true })}
+                {...register("buffer_time_mins", {
+                  setValueAs: (value) => {
+                    if (value === "" || value === null || value === undefined) {
+                      return undefined;
+                    }
+                    const num = Number(value);
+                    return isNaN(num) ? undefined : num;
+                  },
+                })}
                 className={errors.buffer_time_mins ? "border-red-500" : ""}
               />
               {errors.buffer_time_mins && (
@@ -369,7 +426,33 @@ const AddNewStaffMember = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="maxTravelTimeMinutes">
+                Max travel time (minutes)
+              </Label>
+              <Input
+                id="maxTravelTimeMinutes"
+                type="number"
+                placeholder="Enter max travel time"
+                min="0"
+                {...register("max_travel_time_mins", {
+                  setValueAs: (value) => {
+                    if (value === "" || value === null || value === undefined) {
+                      return undefined;
+                    }
+                    const num = Number(value);
+                    return isNaN(num) ? undefined : num;
+                  },
+                })}
+                className={errors.max_travel_time_mins ? "border-red-500" : ""}
+              />
+              {errors.max_travel_time_mins && (
+                <p className="text-sm text-red-500">
+                  {errors.max_travel_time_mins.message}
+                </p>
+              )}
+            </div>
             <div className="space-y-2">
               <Label htmlFor="maxTravelTimeFromStart">
                 Max travel time from start (minutes)
@@ -380,7 +463,13 @@ const AddNewStaffMember = ({
                 placeholder="Enter max travel time"
                 min="0"
                 {...register("max_travel_time_from_start_geo_location_mins", {
-                  valueAsNumber: true,
+                  setValueAs: (value) => {
+                    if (value === "" || value === null || value === undefined) {
+                      return undefined;
+                    }
+                    const num = Number(value);
+                    return isNaN(num) ? undefined : num;
+                  },
                 })}
                 className={
                   errors.max_travel_time_from_start_geo_location_mins
@@ -404,7 +493,13 @@ const AddNewStaffMember = ({
                 placeholder="Enter max travel time"
                 min="0"
                 {...register("max_travel_time_to_end_geo_location_mins", {
-                  valueAsNumber: true,
+                  setValueAs: (value) => {
+                    if (value === "" || value === null || value === undefined) {
+                      return undefined;
+                    }
+                    const num = Number(value);
+                    return isNaN(num) ? undefined : num;
+                  },
                 })}
                 className={
                   errors.max_travel_time_to_end_geo_location_mins
@@ -522,10 +617,12 @@ const AddNewStaffMember = ({
             <Label htmlFor="proBreeds">Pro Breeds</Label>
             <AutoCompleteSelect
               id="proBreeds"
-              options={breeds.map((breed) => ({
-                label: breed.name,
-                value: breed.id.toString(),
-              }))}
+              options={breeds
+                ?.filter((breed) => !restricted_breeds?.includes(breed.id))
+                .map((breed) => ({
+                  label: breed.name,
+                  value: breed.id.toString(),
+                }))}
               value={preferred_breeds?.map((breed) => breed.toString()) || []}
               onChange={(value: any[]) => {
                 setValue(
@@ -533,6 +630,7 @@ const AddNewStaffMember = ({
                   value.map((v) => Number(v))
                 );
               }}
+              multiple
             />
             {errors.preferred_breeds && (
               <p className="text-sm text-red-500">
@@ -545,10 +643,12 @@ const AddNewStaffMember = ({
             <Label htmlFor="conBreeds">Con Breeds</Label>
             <AutoCompleteSelect
               id="conBreeds"
-              options={breeds.map((breed) => ({
-                label: breed.name,
-                value: breed.id.toString(),
-              }))}
+              options={breeds
+                ?.filter((breed) => !preferred_breeds?.includes(breed.id))
+                .map((breed) => ({
+                  label: breed.name,
+                  value: breed.id.toString(),
+                }))}
               value={restricted_breeds?.map((breed) => breed.toString()) || []}
               onChange={(value: any[]) => {
                 setValue(
@@ -556,7 +656,7 @@ const AddNewStaffMember = ({
                   value.map((v) => Number(v))
                 );
               }}
-              multiple={true}
+              multiple
             />
             {errors.restricted_breeds && (
               <p className="text-sm text-red-500">
@@ -569,14 +669,6 @@ const AddNewStaffMember = ({
 
       {/* Form Actions */}
       <div className="flex justify-end gap-4 pt-6">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => reset()}
-          disabled={isSubmitting}
-        >
-          Reset
-        </Button>
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Saving..." : "Save Staff Member"}
         </Button>

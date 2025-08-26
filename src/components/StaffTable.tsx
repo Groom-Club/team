@@ -1,18 +1,30 @@
 import { useState } from "react";
 import StaffTableRow, { StaffMember } from "./StaffTableRow";
 import EditStaffModal from "./EditStaffModal";
+import DeleteStaffModal from "./DeleteStaffModal";
+import useApi from "@/api";
+import { useToast } from "@/components/ui/use-toast";
 
 type Props = {
   staffData: StaffMember[];
   setStaffData: (val: any) => void;
+  gettcps: () => Promise<void>;
 };
-const StaffTable = ({ staffData, setStaffData }: Props) => {
+const StaffTable = ({ staffData, setStaffData, gettcps }: Props) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
+  const api = useApi();
+  const { toast } = useToast();
 
   const handleEditStaff = (staff: StaffMember) => {
     setSelectedStaff(staff);
     setIsEditModalOpen(true);
+  };
+
+  const handleDeleteStaff = (staff: StaffMember) => {
+    setSelectedStaff(staff);
+    setIsDeleteModalOpen(true);
   };
 
   const handleCloseModal = () => {
@@ -20,13 +32,27 @@ const StaffTable = ({ staffData, setStaffData }: Props) => {
     setSelectedStaff(null);
   };
 
-  const handleSaveStaff = (updatedStaff: StaffMember) => {
-    setStaffData(
-      staffData.map((staff) =>
-        staff.id === updatedStaff.id ? updatedStaff : staff,
-      ),
-    );
+  const handleCloseDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setSelectedStaff(null);
+  };
+
+  const handleSaveStaff = async (updatedStaff: StaffMember) => {
+    await gettcps();
     handleCloseModal();
+  };
+
+  const handleConfirmDelete = async (staffToDelete: StaffMember) => {
+    let res = await api.tcps.deleteStaffMember(staffToDelete.id);
+    handleCloseDeleteModal();
+    setStaffData(staffData.filter((staff) => staff.id !== staffToDelete.id));
+
+    // Show success toast
+    toast({
+      title: "Success",
+      description: "User has been deleted successfully",
+      variant: "default",
+    });
   };
 
   return (
@@ -38,9 +64,9 @@ const StaffTable = ({ staffData, setStaffData }: Props) => {
               <th className="py-3 pl-6 pr-3">Total Care Partner</th>
               <th className="px-3 py-3">Email</th>
               <th className="px-3 py-3">Capacity</th>
-              <th className="px-3 py-3">Travel time</th>
               <th className="px-3 py-3">Max travel time</th>
               <th className="px-3 py-3">Buffer time (minutes)</th>
+              <th className="px-3 py-3">Status</th>
               <th className="py-3 pl-3 pr-6 text-right">Actions</th>
             </tr>
           </thead>
@@ -52,6 +78,7 @@ const StaffTable = ({ staffData, setStaffData }: Props) => {
                   key={staff.id}
                   staff={staff}
                   onEditStaff={handleEditStaff}
+                  onDeleteStaff={handleDeleteStaff}
                 />
               ))}
           </tbody>
@@ -63,6 +90,12 @@ const StaffTable = ({ staffData, setStaffData }: Props) => {
         onClose={handleCloseModal}
         staff={selectedStaff}
         onSave={handleSaveStaff}
+      />
+      <DeleteStaffModal
+        isOpen={isDeleteModalOpen}
+        onClose={handleCloseDeleteModal}
+        staff={selectedStaff}
+        onDelete={handleConfirmDelete}
       />
     </>
   );
