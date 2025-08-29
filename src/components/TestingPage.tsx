@@ -662,7 +662,7 @@ const TestingPage = () => {
                             {format(app.timeSlotDateAndTime, "h:mm a") || "N/A"}
                           </TableCell>
                           {/* <TableCell>{app.adjustments?.join(", ")}</TableCell> */}
-                          <TableCell>{app.travelTimeMins}</TableCell>
+                          <TableCell>{app.travelTimeMins.toFixed(2)}</TableCell>
                           <TableCell
                             className={
                               app.travelTimeMins - app.adjustedTravelTime > 0
@@ -673,9 +673,9 @@ const TestingPage = () => {
                                 : ""
                             }
                           >
-                            {app.travelTimeMins - app.adjustedTravelTime}
+                            {(app.travelTimeMins - app.adjustedTravelTime).toFixed(2)}
                           </TableCell>
-                          <TableCell>{app.adjustedTravelTime}</TableCell>
+                          <TableCell>{app.adjustedTravelTime.toFixed(2)}</TableCell>
                           <TableCell>{app.travelDistance.toFixed(1)}</TableCell>
 
                           <TableCell>${app.totalCost}</TableCell>
