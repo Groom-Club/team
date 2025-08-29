@@ -18,6 +18,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
+import { toast } from "./ui/use-toast";
 
 interface TcpData {
   id: number;
@@ -314,6 +315,11 @@ const TestingPage = () => {
       saveQueryToHistory(data, res.data);
     } catch (error) {
       console.error("Error fetching appointments:", error);
+      toast({
+        title: "Error fetching appointments",
+        description: "Please try again later",
+        variant: "destructive",
+      });
       // You could add a toast notification here for better UX
     } finally {
       setIsLoading(false);

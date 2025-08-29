@@ -27,13 +27,12 @@ const staffMemberSchema = z.object({
     .min(2, "Last name must be at least 2 characters"),
   email: z
     .string()
-    .email("Please enter a valid email address")
-    .optional()
-    .or(z.literal("")),
+    .email("Please enter a valid email address"),
   capacity: z.coerce
-    .number()
-    .min(0, "Capacity must be 0 or greater")
-    .optional(),
+    .number({
+      message:"Enter a numeric value"
+    })
+    .min(0, "Capacity must be 0 or greater"),
   buffer_time_mins: z
     .number()
     .min(0, "Buffer time must be 0 or greater")
@@ -349,7 +348,7 @@ const AddNewStaffMember = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email *</Label>
               <Input
                 id="email"
                 type="email"
@@ -377,7 +376,7 @@ const AddNewStaffMember = ({
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="capacity">Capacity (minutes)</Label>
+              <Label htmlFor="capacity">Capacity (minutes) *</Label>
               <Input
                 id="capacity"
                 type="number"

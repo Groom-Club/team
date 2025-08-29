@@ -41,10 +41,7 @@ const HistoryOverrides = ({ staffMember, updateStaffMember }: Props) => {
     [HistoryOverrides]
   );
 
-  const handleDeleteOverride = (overrideId: number) => {
-    setDeleteOverrideId(overrideId);
-    setIsDeleteModalOpen(true);
-  };
+  
 
   const confirmDelete = async () => {
     if (deleteOverrideId) {
@@ -94,9 +91,6 @@ const HistoryOverrides = ({ staffMember, updateStaffMember }: Props) => {
                 <th className="text-left py-3 px-4 text-sm font-medium text-neutral-700">
                   Working Hours
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-neutral-700">
-                  Actions
-                </th>
               </tr>
             </thead>
             <tbody>
@@ -116,18 +110,6 @@ const HistoryOverrides = ({ staffMember, updateStaffMember }: Props) => {
                             override.end_time
                           )}`
                         : "Not working"}
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteOverride(override.id)}
-                          className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
                     </td>
                   </tr>
                 );
