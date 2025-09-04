@@ -16,7 +16,7 @@ import {
 } from "./ui/alert-dialog";
 import DateOverrideDrawer from "./DateOverrideDrawer";
 import useApi from "@/api";
-import { formatTime } from "@/lib/utils";
+import { formatTime, formatTimeToMilitary } from "@/lib/utils";
 
 type Props = {
   staffMember: StaffMember;
@@ -95,14 +95,15 @@ const OngoingOverrides = ({ staffMember, updateStaffMember }: Props) => {
   const handleEditSave = async (dateOverrides: any[]) => {
     if (editingOverride && dateOverrides.length > 0) {
       try {
+      
         const override = dateOverrides[0]; // We're editing a single override
 
         const updatedOverrideData = {
           tcp_id: staffMember.id, // Include tcp_id for backend API
           override_date: format(override.date, "yyyy-MM-dd"),
           override_type: override.is_working ? "working" : "not_working",
-          start_time: override.workingHours?.startTime || null,
-          end_time: override.workingHours?.endTime || null,
+          start_time: formatTimeToMilitary(override.workingHours?.startTime) || null,
+          end_time: formatTimeToMilitary(override.workingHours?.endTime) || null,
         };
 
         await api.tcps.editScheduleOverride(

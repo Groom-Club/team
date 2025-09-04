@@ -269,10 +269,11 @@ const TestingPage = () => {
       const filtered = allMembers.filter((member) => {
         const firstName = member.first_name?.toLowerCase() || "";
         const lastName = member.last_name?.toLowerCase() || "";
+        const fullName = `${firstName} ${lastName}`;
         const searchLower = debouncedSearchQuery.toLowerCase();
 
         return (
-          firstName.includes(searchLower) || lastName.includes(searchLower)
+          fullName.includes(searchLower)
         );
       });
       setFilteredMembers(filtered);
@@ -457,9 +458,10 @@ const TestingPage = () => {
                     ]}
                     value={selectedMember}
                     onChange={handleMemberChange}
-                    placeholder="Search for member..."
+                    placeholder={isLoadingMembers ? "Loading..." : "Search for member..."}
                     onSearch={handleMemberSearch}
                     isLoading={isLoadingMembers}
+                    disabled={isLoadingMembers}
                   />
                   {errors.member && (
                     <p className="text-sm text-red-600">
