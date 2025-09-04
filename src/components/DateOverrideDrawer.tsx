@@ -49,7 +49,6 @@ const DateOverrideDrawer = ({
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [dateOverrides, setDateOverrides] = useState<DateOverride[]>([]);
-  // Service areas removed as per requirements
 
   // Initialize with editing data if provided
   useEffect(() => {
@@ -96,17 +95,25 @@ const DateOverrideDrawer = ({
       return;
     }
 
-    setSelectedDate(date);
-
-    // Check if we're editing and if the new date already has an override
-    const existingOverride = dateOverrides.find((d) => isSameDay(d.date, date));
-
-    if (existingOverride) {
-      // Date already has an override, just select it
+    if (editingOverride) {
+      // Only allow one date selection in edit mode
+      setSelectedDate(date);
+      setSelectedDates([date]);
+      setDateOverrides([
+        {
+          date,
+          workingHours: null,
+          is_working: false,
+        },
+      ]);
       return;
     }
 
-    // Add new date to selection
+    // Add mode (multi-date allowed)
+    setSelectedDate(date);
+    const existingOverride = dateOverrides.find((d) => isSameDay(d.date, date));
+    if (existingOverride) return;
+
     if (!selectedDates.some((d) => isSameDay(d, date))) {
       setSelectedDates([...selectedDates, date]);
       setDateOverrides([
@@ -120,15 +127,11 @@ const DateOverrideDrawer = ({
     }
   };
 
-  // Check if staff normally works on a given day
   const staffNormallyWorks = (date: Date): boolean => {
-    // Get day of week (0 = Sunday, 6 = Saturday)
     const dayOfWeek = getDay(date);
-    // Assume staff works Monday-Friday (1-5)
-    return dayOfWeek > 0 && dayOfWeek < 6;
+    return dayOfWeek > 0 && dayOfWeek < 6; // Mon–Fri
   };
 
-  // Add or update working hours for a date
   const handleAddWorkingHours = (date: Date) => {
     const existingOverrideIndex = dateOverrides.findIndex((override) =>
       isSameDay(override.date, date)
@@ -140,7 +143,6 @@ const DateOverrideDrawer = ({
     };
 
     if (existingOverrideIndex === -1) {
-      // Add new override
       setDateOverrides([
         ...dateOverrides,
         {
@@ -150,16 +152,13 @@ const DateOverrideDrawer = ({
         },
       ]);
     } else {
-      // Update existing override
       const updatedOverrides = [...dateOverrides];
-      updatedOverrides[existingOverrideIndex].workingHours =
-        defaultWorkingHours;
+      updatedOverrides[existingOverrideIndex].workingHours = defaultWorkingHours;
       updatedOverrides[existingOverrideIndex].is_working = true;
       setDateOverrides(updatedOverrides);
     }
   };
 
-  // Toggle working status for a date (working <-> not working)
   const handleToggleWorkingStatus = (date: Date) => {
     const existingOverrideIndex = dateOverrides.findIndex((override) =>
       isSameDay(override.date, date)
@@ -170,11 +169,9 @@ const DateOverrideDrawer = ({
       const currentOverride = updatedOverrides[existingOverrideIndex];
 
       if (currentOverride.is_working) {
-        // Change from working to not working
         currentOverride.is_working = false;
         currentOverride.workingHours = null;
       } else {
-        // Change from not working to working
         currentOverride.is_working = true;
         currentOverride.workingHours = {
           startTime: "9:00 AM",
@@ -186,7 +183,6 @@ const DateOverrideDrawer = ({
     }
   };
 
-  // Remove working hours for a date
   const handleRemoveWorkingHours = (date: Date) => {
     const existingOverrideIndex = dateOverrides.findIndex((override) =>
       isSameDay(override.date, date)
@@ -200,7 +196,6 @@ const DateOverrideDrawer = ({
     }
   };
 
-  // Update working hours for a date
   const handleUpdateWorkingHours = (
     date: Date,
     field: keyof WorkingHours,
@@ -223,7 +218,6 @@ const DateOverrideDrawer = ({
     }
   };
 
-  // Get working hours for a date
   const getWorkingHoursForDate = (date: Date): WorkingHours | null => {
     const override = dateOverrides.find((override) =>
       isSameDay(override.date, date)
@@ -232,46 +226,38 @@ const DateOverrideDrawer = ({
   };
 
   const handleSave = () => {
-    onSave(dateOverrides);
+    if (editingOverride) {
+      if (dateOverrides.length > 0) {
+        // Always send the last updated override in edit mode
+        onSave([dateOverrides[dateOverrides.length - 1]]);
+      }
+    } else {
+      onSave(dateOverrides);
+    }
     onClose();
-
-    // Reset state after saving
     setSelectedDate(null);
     setSelectedDates([]);
     setDateOverrides([]);
   };
 
-  // Generate calendar days
   const generateCalendarDays = () => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
-
-    // First day of the month
     const firstDay = new Date(year, month, 1);
-    // Last day of the month
     const lastDay = new Date(year, month + 1, 0);
-
-    // Day of the week for the first day (0 = Sunday, 6 = Saturday)
     const firstDayOfWeek = firstDay.getDay();
-
-    // Total days in the month
     const daysInMonth = lastDay.getDate();
-
-    // Array to hold all calendar days
     const days = [];
 
-    // Add empty cells for days before the first day of the month
     for (let i = 0; i < firstDayOfWeek; i++) {
       days.push(null);
     }
-
-    // Add days of the month
     for (let i = 1; i <= daysInMonth; i++) {
       days.push(new Date(year, month, i));
     }
-
     return days;
   };
+
   const handleRemoveDate = (date: Date) => {
     setDateOverrides(
       dateOverrides.filter((override) => !isSameDay(override.date, date))
@@ -287,16 +273,12 @@ const DateOverrideDrawer = ({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
-      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/20"
         onClick={onClose}
         aria-hidden="true"
       />
-
-      {/* Drawer */}
       <div className="relative w-full max-w-[450px] bg-white h-full overflow-y-auto flex flex-col animate-in slide-in-from-right duration-300">
-        {/* Header */}
         <div className="p-6 border-b border-neutral-100">
           <button
             onClick={onClose}
@@ -315,12 +297,10 @@ const DateOverrideDrawer = ({
           </div>
         </div>
 
-        {/* Content */}
         <div className="flex-1 p-6 overflow-y-auto">
-          {/* User Preview */}
           <div className="bg-neutral-50 rounded-xl p-4 flex items-center mb-6">
             <div className="w-10 h-10 rounded-full bg-neutral-200 flex items-center justify-center text-neutral-700 font-bold mr-3">
-              {staffName.charAt(0)}
+              {staffName?.charAt(0)}
             </div>
             <div>
               <p className="font-medium text-neutral-900">{staffName}</p>
@@ -328,13 +308,11 @@ const DateOverrideDrawer = ({
             </div>
           </div>
 
-          {/* Calendar Section */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-neutral-700 mb-3">
-              Select the override date(s)
+              Select the override date{editingOverride ? "" : "(s)"}
             </label>
 
-            {/* Calendar Navigation */}
             <div className="flex justify-between items-center mb-4">
               <button
                 onClick={handlePrevMonth}
@@ -353,9 +331,7 @@ const DateOverrideDrawer = ({
               </button>
             </div>
 
-            {/* Calendar Grid */}
             <div className="grid grid-cols-7 gap-1">
-              {/* Weekday Headers */}
               {weekdays.map((day) => (
                 <div
                   key={day}
@@ -365,7 +341,6 @@ const DateOverrideDrawer = ({
                 </div>
               ))}
 
-              {/* Calendar Days */}
               {calendarDays.map((day, index) => (
                 <div key={index} className="aspect-square">
                   {day ? (
@@ -375,7 +350,9 @@ const DateOverrideDrawer = ({
                         isSameDay(day, selectedDate || new Date(0))
                           ? "bg-groom-yellow text-groom-charcoal"
                           : selectedDates.some((d) => isSameDay(d, day))
-                          ? "bg-groom-yellow/30 text-groom-charcoal"
+                          ? editingOverride
+                            ? "bg-groom-yellow text-groom-charcoal"
+                            : "bg-groom-yellow/30 text-groom-charcoal"
                           : "hover:bg-neutral-100"
                       }`}
                       disabled={isBefore(day, new Date())}
@@ -390,7 +367,6 @@ const DateOverrideDrawer = ({
             </div>
           </div>
 
-          {/* Working Hours Section */}
           {selectedDate && (
             <div className="mb-6 border border-neutral-200 rounded-lg p-4">
               <div className="flex justify-between items-center">
@@ -409,13 +385,11 @@ const DateOverrideDrawer = ({
                 </Button>
               </div>
 
-              {/* Working Hours Content */}
               {(() => {
                 const workingHours = getWorkingHoursForDate(selectedDate);
                 const normallyWorks = staffNormallyWorks(selectedDate);
 
                 if (workingHours) {
-                  // Show editable working hours
                   return (
                     <div>
                       <div className="flex items-center gap-2 mb-2">
@@ -465,12 +439,9 @@ const DateOverrideDrawer = ({
                           }
                         />
                       </div>
-
-                      {/* Service Area Dropdown removed as per requirements */}
                     </div>
                   );
                 } else {
-                  // Show not working message with add button
                   return (
                     <div className="flex flex-col gap-2">
                       <p className="text-neutral-600">
@@ -491,7 +462,6 @@ const DateOverrideDrawer = ({
           )}
         </div>
 
-        {/* Footer */}
         <div className="p-6 border-t border-neutral-100 flex justify-end gap-3 sticky bottom-0 bg-white">
           <button
             onClick={() => {

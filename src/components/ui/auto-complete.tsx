@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "./input";
+import { FC, ReactNode, useEffect, useRef, useState } from "react";
 
 interface AutoCompleteSelectProps {
   id?: string;
@@ -15,19 +16,19 @@ interface AutoCompleteSelectProps {
   className?: string;
   onSearch?: (query: string) => void;
   isLoading?: boolean;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
+  leftIcon?:ReactNode;
+  rightIcon?:ReactNode;
   containerClassName?: string;
   disabled?: boolean;
   emptyDataComponent?: (
     searchQuery: string,
     onClose: () => void
-  ) => React.ReactNode;
+  ) =>ReactNode;
   multiple?: boolean;
   withoutSearch?: boolean;
 }
 
-export const AutoCompleteSelect: React.FC<AutoCompleteSelectProps> = ({
+export const AutoCompleteSelect:FC<AutoCompleteSelectProps> = ({
   id,
   options,
   value,
@@ -44,21 +45,17 @@ export const AutoCompleteSelect: React.FC<AutoCompleteSelectProps> = ({
   multiple = false,
   withoutSearch = false,
 }) => {
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [showSuggestions, setShowSuggestions] = React.useState(false);
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [searchQuery, setSearchQuery] =useState("");
+  const [showSuggestions, setShowSuggestions] =useState(false);
+  const inputRef =useRef<HTMLInputElement>(null);
+  const containerRef =useRef<HTMLDivElement>(null);
 
   const selected = options.filter((opt) => value?.includes(opt.value) || false);
 
-  React.useEffect(() => {
-    if (!multiple && selected.length > 0) {
-      setSearchQuery(selected[0].label);
-    }
-  }, [selected, multiple]);
+  
 
   // Handle click outside to close dropdown
-  React.useEffect(() => {
+ useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         containerRef.current &&
@@ -105,7 +102,7 @@ export const AutoCompleteSelect: React.FC<AutoCompleteSelectProps> = ({
     } else {
       // Single selection
       onChange([optionValue], { ...rest });
-      setSearchQuery(option.label);
+      setSearchQuery("");
       setShowSuggestions(false);
     }
   };

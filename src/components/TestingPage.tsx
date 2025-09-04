@@ -18,6 +18,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
+import { toast } from "./ui/use-toast";
 
 interface TcpData {
   id: number;
@@ -268,10 +269,11 @@ const TestingPage = () => {
       const filtered = allMembers.filter((member) => {
         const firstName = member.first_name?.toLowerCase() || "";
         const lastName = member.last_name?.toLowerCase() || "";
+        const fullName = `${firstName} ${lastName}`;
         const searchLower = debouncedSearchQuery.toLowerCase();
 
         return (
-          firstName.includes(searchLower) || lastName.includes(searchLower)
+          fullName.includes(searchLower)
         );
       });
       setFilteredMembers(filtered);
@@ -314,6 +316,11 @@ const TestingPage = () => {
       saveQueryToHistory(data, res.data);
     } catch (error) {
       console.error("Error fetching appointments:", error);
+      toast({
+        title: "Error fetching appointments",
+        description: "Please try again later",
+        variant: "destructive",
+      });
       // You could add a toast notification here for better UX
     } finally {
       setIsLoading(false);
@@ -451,9 +458,10 @@ const TestingPage = () => {
                     ]}
                     value={selectedMember}
                     onChange={handleMemberChange}
-                    placeholder="Search for member..."
+                    placeholder={isLoadingMembers ? "Loading..." : "Search for member..."}
                     onSearch={handleMemberSearch}
                     isLoading={isLoadingMembers}
+                    disabled={isLoadingMembers}
                   />
                   {errors.member && (
                     <p className="text-sm text-red-600">
@@ -656,7 +664,7 @@ const TestingPage = () => {
                             {format(app.timeSlotDateAndTime, "h:mm a") || "N/A"}
                           </TableCell>
                           {/* <TableCell>{app.adjustments?.join(", ")}</TableCell> */}
-                          <TableCell>{app.travelTimeMins}</TableCell>
+                          <TableCell>{app.travelTimeMins.toFixed(2)}</TableCell>
                           <TableCell
                             className={
                               app.travelTimeMins - app.adjustedTravelTime > 0
@@ -667,9 +675,9 @@ const TestingPage = () => {
                                 : ""
                             }
                           >
-                            {app.travelTimeMins - app.adjustedTravelTime}
+                            {(app.travelTimeMins - app.adjustedTravelTime).toFixed(2)}
                           </TableCell>
-                          <TableCell>{app.adjustedTravelTime}</TableCell>
+                          <TableCell>{app.adjustedTravelTime.toFixed(2)}</TableCell>
                           <TableCell>{app.travelDistance.toFixed(1)}</TableCell>
 
                           <TableCell>${app.totalCost}</TableCell>

@@ -38,3 +38,17 @@ export const formatTime = (timeString: string) => {
   );
   return format(dateWithTime, "h:mm a");
 };
+export const formatTimeToMilitary = (timeString: string) => {
+  if (!timeString) return null;
+  
+  try {
+    // Parse the time string (e.g., "12:15 PM", "9:30 AM")
+    const parsedTime = parse(timeString, "h:mm a", new Date());
+    
+    // Format to HH:mm (24-hour format)
+    return format(parsedTime, "HH:mm");
+  } catch (error) {
+    console.error("Error parsing time string:", timeString, error);
+    return null;
+  }
+};
